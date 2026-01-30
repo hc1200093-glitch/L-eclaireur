@@ -607,6 +607,7 @@ const HomePage = ({ onStartAnalysis }) => {
           </div>
           
           <VisitorCounter count={visitorCount} />
+          <TestimonialCounter count={testimonialStats.count} averageRating={testimonialStats.averageRating} />
         </div>
       </header>
 
