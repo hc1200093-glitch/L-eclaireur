@@ -384,14 +384,16 @@ Pour chaque incohérence:
 *Date d'analyse: {date_analyse}*
 """
 
-async def analyze_pdf_segment(pdf_path: str, segment_num: int, total_segments: int, max_retries: int = 5) -> str:
-    """Analyse un segment de PDF avec Gemini avec retry automatique."""
+async def analyze_pdf_segment(pdf_path: str, segment_num: int, total_segments: int, max_retries: int = 3) -> str:
+    """Analyse un segment de PDF avec Gemini avec retry automatique optimisé."""
     import asyncio
     
     date_analyse = datetime.now(timezone.utc).strftime("%d/%m/%Y à %H:%M UTC")
     
     for attempt in range(max_retries):
         try:
+            logger.info(f"Analyse segment {segment_num}/{total_segments} - tentative {attempt+1}/{max_retries}")
+            
             chat = LlmChat(
                 api_key=EMERGENT_LLM_KEY,
                 session_id=f"analysis-{uuid.uuid4()}",
