@@ -945,28 +945,44 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       <div className="divider"></div>
 
       <main className="main-content">
-        <div className={`upload-zone ${dragActive ? 'drag-active' : ''} ${file ? 'has-file' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}>
-          {!file ? (
+        <div className={`upload-zone ${dragActive ? 'drag-active' : ''} ${files.length > 0 ? 'has-file' : ''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}>
+          {files.length === 0 ? (
             <div className="upload-placeholder">
               <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <p className="upload-text">Glissez-déposez votre PDF ici</p>
+              <p className="upload-text">Glissez-déposez vos documents ici</p>
               <p className="upload-subtext">ou</p>
               <label className="file-select-btn">
-                <input type="file" accept=".pdf,application/pdf" onChange={handleFileSelect} hidden data-testid="file-input"/>
-                Sélectionner un fichier
+                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf" onChange={handleFileSelect} hidden multiple data-testid="file-input"/>
+                Sélectionner des fichiers
               </label>
-              <p className="upload-hint">Formats acceptés: PDF (max 100 Mo)</p>
+              <p className="upload-hint">Formats acceptés: PDF, Word, Images (JPG, PNG, TIFF), TXT, RTF</p>
+              <p className="upload-hint">Maximum 10 fichiers, 100 Mo chacun</p>
             </div>
           ) : (
-            <div className="file-info">
-              <svg className="file-icon" viewBox="0 0 24 24" fill="none" stroke="#2a7d7d" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <p className="file-name" data-testid="file-name">{file.name}</p>
-              <p className="file-size">{formatFileSize(file.size)}</p>
+            <div className="files-list">
+              <h4>{files.length} fichier{files.length > 1 ? 's' : ''} sélectionné{files.length > 1 ? 's' : ''}</h4>
+              <p className="total-size">Taille totale: {formatFileSize(totalSize)}</p>
+              <div className="files-grid">
+                {files.map((f, idx) => (
+                  <div key={idx} className="file-item">
+                    <svg className="file-icon-small" viewBox="0 0 24 24" fill="none" stroke="#2a7d7d" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <div className="file-details">
+                      <p className="file-name-small">{f.name}</p>
+                      <p className="file-size-small">{formatFileSize(f.size)}</p>
+                    </div>
+                    <button className="remove-file-btn" onClick={() => removeFile(idx)} title="Retirer">×</button>
+                  </div>
+                ))}
+              </div>
+              <label className="add-more-btn">
+                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf" onChange={handleFileSelect} hidden multiple/>
+                + Ajouter d'autres fichiers
+              </label>
             </div>
           )}
         </div>
 
-        {file && (
+        {files.length > 0 && (
           <div className="action-buttons">
             <button className="btn btn-primary" onClick={handleAnalyze} disabled={loading} data-testid="analyze-btn">
               <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
