@@ -829,9 +829,11 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const handleDownload = async () => {
     if (!result) return;
     
-    const filename = file?.name?.replace('.pdf', '') || 'rapport_analyse';
+    const filename = files.length === 1 ? files[0]?.name?.replace(/\.[^/.]+$/, '') : 'rapport_analyse_combine';
     const content = result.analysis;
-    const title = `Rapport d'Analyse Défense - ${filename}`;
+    const title = files.length === 1 ? 
+      `Rapport d'Analyse Défense - ${filename}` : 
+      `Rapport d'Analyse Défense Combiné - ${files.length} documents`;
     const date = new Date().toLocaleDateString('fr-CA');
     
     switch (downloadFormat) {
