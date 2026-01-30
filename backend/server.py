@@ -214,7 +214,7 @@ def anonymize_for_ai_learning(text: str) -> str:
     return text
 
 def split_pdf_into_chunks(pdf_path: str, max_size_bytes: int = MAX_CHUNK_SIZE) -> List[str]:
-    """Divise un PDF volumineux en plusieurs fichiers plus petits."""
+    """Divise un PDF volumineux en plusieurs fichiers plus petits pour éviter les timeouts Gemini."""
     chunk_paths = []
     
     try:
@@ -226,12 +226,15 @@ def split_pdf_into_chunks(pdf_path: str, max_size_bytes: int = MAX_CHUNK_SIZE) -
         
         file_size = os.path.getsize(pdf_path)
         avg_page_size = file_size / total_pages
+        
+        # Calculer pages par chunk basé sur la taille
         pages_per_chunk = max(1, int(max_size_bytes / avg_page_size))
-        pages_per_chunk = min(pages_per_chunk, 15)  # Max 15 pages pour éviter timeouts
+        # Limiter strictement à MAX_PAGES_PER_CHUNK pour éviter timeouts Gemini
+        pages_per_chunk = min(pages_per_chunk, MAX_PAGES_PER_CHUNK)
         
         num_chunks = math.ceil(total_pages / pages_per_chunk)
         
-        logger.info(f"PDF de {total_pages} pages, divisé en {num_chunks} segments de ~{pages_per_chunk} pages")
+        logger.info(f"PDF de {total_pages} pages ({file_size/(1024*1024):.1f} Mo), divisé en {num_chunks} segments de ~{pages_per_chunk} pages")
         
         for i in range(num_chunks):
             writer = PdfWriter()
