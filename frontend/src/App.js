@@ -136,7 +136,7 @@ const DestructionPopup = ({ onClose }) => (
       </div>
       <h3>Documents détruits de manière sécurisée</h3>
       <p>
-        Vos documents ont été <strong>définitivement détruits</strong> selon la norme militaire 
+        Vos documents ont été <strong>définitivement détruits</strong> par méthode niveau militaire 
         <strong> DOD 5220.22-M</strong> (3 passes d'écrasement).
       </p>
       <p className="destruction-note">
