@@ -225,7 +225,7 @@ def split_pdf_into_chunks(pdf_path: str, max_size_bytes: int = MAX_CHUNK_SIZE) -
         file_size = os.path.getsize(pdf_path)
         avg_page_size = file_size / total_pages
         pages_per_chunk = max(1, int(max_size_bytes / avg_page_size))
-        pages_per_chunk = min(pages_per_chunk, 50)
+        pages_per_chunk = min(pages_per_chunk, 30)  # Max 30 pages pour plus de fluidité
         
         num_chunks = math.ceil(total_pages / pages_per_chunk)
         
