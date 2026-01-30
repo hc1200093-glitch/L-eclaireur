@@ -30,8 +30,8 @@ db = client[os.environ.get('DB_NAME')]
 # Emergent LLM Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
-# Limite de taille pour Gemini (15 Mo pour être safe)
-MAX_CHUNK_SIZE = 15 * 1024 * 1024  # 15 Mo
+# Limite de taille pour Gemini (10 Mo pour éviter timeouts)
+MAX_CHUNK_SIZE = 10 * 1024 * 1024  # 10 Mo
 
 # Répertoire pour les fichiers temporaires
 UPLOAD_DIR = tempfile.gettempdir()
