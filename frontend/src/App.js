@@ -1060,8 +1060,20 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
         {loading && (
           <div className="loading-container" data-testid="loading-indicator">
             <div className="loading-spinner"></div>
-            <p className="loading-text">Analyse du document en cours...</p>
+            <p className="loading-text">Analyse en cours... {progress}%</p>
+            <div className="progress-bar-container">
+              <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+            </div>
             <p className="loading-subtext">Les gros documents sont segmentés. <strong>Cela peut prendre plusieurs minutes.</strong></p>
+          </div>
+        )}
+
+        {showLatencyPopup && (
+          <div className="latency-popup">
+            <div className="latency-popup-content">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <p>Les serveurs sont actuellement sollicités. Veuillez patienter...</p>
+            </div>
           </div>
         )}
 
