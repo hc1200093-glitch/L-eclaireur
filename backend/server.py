@@ -566,12 +566,37 @@ async def root():
 async def health_check():
     return {"status": "healthy", "service": "L'Éclaireur"}
 
+# Formats acceptés
+ACCEPTED_FORMATS = {
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.tiff': 'image/tiff',
+    '.tif': 'image/tiff',
+    '.bmp': 'image/bmp',
+    '.txt': 'text/plain',
+    '.rtf': 'application/rtf',
+}
+
+def get_file_extension(filename: str) -> str:
+    """Retourne l'extension du fichier en minuscules."""
+    return os.path.splitext(filename.lower())[1]
+
+def is_accepted_format(filename: str) -> bool:
+    """Vérifie si le format est accepté."""
+    ext = get_file_extension(filename)
+    return ext in ACCEPTED_FORMATS
+
 @api_router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
-    """Analyse un document PDF et retourne un rapport de défense."""
+    """Analyse un document et retourne un rapport de défense."""
     
-    if not file.filename.lower().endswith('.pdf'):
-        raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés")
+    if not is_accepted_format(file.filename):
+        accepted = ", ".join(ACCEPTED_FORMATS.keys())
+        raise HTTPException(status_code=400, detail=f"Format non accepté. Formats acceptés: {accepted}")
     
     contents = await file.read()
     file_size = len(contents)
