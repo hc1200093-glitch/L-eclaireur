@@ -713,6 +713,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [error, setError] = useState(null);
   const [downloadFormat, setDownloadFormat] = useState("pdf");
   const [showDestructionPopup, setShowDestructionPopup] = useState(false);
+  const [abortController, setAbortController] = useState(null);
 
   const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf'];
 
