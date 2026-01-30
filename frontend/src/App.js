@@ -42,7 +42,7 @@ const LegalPopup = ({ onAccept }) => {
             <h3>Confidentialité et sécurité</h3>
             <ul>
               <li><strong>Aucune copie n'est conservée</strong> par Henri Albert Pertzing ni sur ce site.</li>
-              <li>Tous les documents sont <strong>détruits de manière sécurisée</strong> selon la norme DOD 5220.22-M après l'analyse.</li>
+              <li>Tous les documents sont <strong>détruits de manière sécurisée</strong> par méthode niveau militaire DOD 5220.22-M après l'analyse.</li>
               <li>Les données ultra-sensibles (NAS, RAMQ, permis de conduire, coordonnées bancaires) sont <strong>automatiquement masquées</strong> dans le rapport.</li>
             </ul>
           </div>
