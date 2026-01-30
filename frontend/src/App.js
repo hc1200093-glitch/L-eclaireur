@@ -824,6 +824,8 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
     return (bytes / (1024 * 1024)).toFixed(2) + " Mo";
   };
 
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+
   const handleDownload = async () => {
     if (!result) return;
     
