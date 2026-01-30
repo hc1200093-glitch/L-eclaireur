@@ -531,6 +531,7 @@ const MedecinsSection = () => {
 const HomePage = ({ onStartAnalysis }) => {
   const [visitorCount, setVisitorCount] = useState(0);
   const [testimonials, setTestimonials] = useState([]);
+  const [testimonialStats, setTestimonialStats] = useState({ count: 0, averageRating: 0 });
   const [darkMode, setDarkMode] = useState(false);
   const testimonialsRef = useRef(null);
 
@@ -546,6 +547,16 @@ const HomePage = ({ onStartAnalysis }) => {
       try {
         const res = await axios.get(`${API}/testimonials`);
         setTestimonials(res.data);
+        // Calculer les stats des témoignages
+        if (res.data.length > 0) {
+          const positiveTestimonials = res.data.filter(t => t.rating >= 4);
+          const totalRating = res.data.reduce((sum, t) => sum + t.rating, 0);
+          const avgRating = totalRating / res.data.length;
+          setTestimonialStats({
+            count: positiveTestimonials.length,
+            averageRating: avgRating
+          });
+        }
       } catch (e) {}
     };
     loadStats();
