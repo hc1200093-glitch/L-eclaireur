@@ -436,9 +436,10 @@ Le travailleur compte sur toi pour l'aider à comprendre son dossier et se défe
             
         except Exception as e:
             error_str = str(e)
+            logger.error(f"Erreur segment {segment_num}: {error_str[:200]}")
             if "502" in error_str or "503" in error_str or "timeout" in error_str.lower() or "500" in error_str:
                 if attempt < max_retries - 1:
-                    wait_time = (attempt + 1) * 15
+                    wait_time = (attempt + 1) * 5  # 5s, 10s, 15s - délais réduits
                     logger.warning(f"Erreur temporaire segment {segment_num}, retry {attempt+2}/{max_retries} dans {wait_time}s...")
                     await asyncio.sleep(wait_time)
                     continue
