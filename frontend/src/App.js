@@ -779,13 +779,41 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
 
   const handleAnalyze = async () => {
     if (files.length === 0) return;
+    
+    // Créer un ID unique pour cette analyse
+    const currentAnalysisId = Date.now();
+    setAnalysisId(currentAnalysisId);
+    
     setLoading(true);
     setError(null);
     setResult(null);
+    setProgress(0);
     
     // Créer un AbortController pour permettre l'annulation
     const controller = new AbortController();
     setAbortController(controller);
+    
+    // Simuler la progression basée sur la taille des fichiers
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    const estimatedTime = Math.max(30, Math.min(300, totalSize / (1024 * 1024) * 5)); // 5 sec par Mo, min 30s, max 300s
+    let startTime = Date.now();
+    let lastProgressUpdate = Date.now();
+    
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const estimatedProgress = Math.min(95, (elapsed / estimatedTime) * 100);
+      setProgress(Math.round(estimatedProgress));
+      
+      // Vérifier si latence (pas de mise à jour depuis 30 secondes après 10% de progression)
+      const timeSinceLastUpdate = Date.now() - lastProgressUpdate;
+      if (timeSinceLastUpdate > 30000 && estimatedProgress > 10 && !showLatencyPopup) {
+        setShowLatencyPopup(true);
+        latencyTimeoutRef.current = setTimeout(() => {
+          setShowLatencyPopup(false);
+        }, 10000); // Fermer après 10 secondes
+        lastProgressUpdate = Date.now();
+      }
+    }, 1000);
     
     try {
       const formData = new FormData();
@@ -807,6 +835,13 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
         signal: controller.signal,
       });
       
+      // Vérifier si c'est toujours la même analyse (pas une nouvelle lancée entre temps)
+      if (analysisId !== currentAnalysisId && analysisId !== null) {
+        console.log("Analyse ignorée car une nouvelle a été lancée");
+        return;
+      }
+      
+      setProgress(100);
       // Normaliser la réponse
       const analysisText = response.data.analysis || response.data.combined_analysis;
       setResult({ ...response.data, analysis: analysisText });
@@ -821,6 +856,16 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
         setError("Une erreur est survenue. Veuillez réessayer.");
       }
     } finally {
+      // Nettoyer les intervalles
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      if (latencyTimeoutRef.current) {
+        clearTimeout(latencyTimeoutRef.current);
+        latencyTimeoutRef.current = null;
+      }
+      setShowLatencyPopup(false);
       setLoading(false);
       setAbortController(null);
     }
