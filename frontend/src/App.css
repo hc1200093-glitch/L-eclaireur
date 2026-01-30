@@ -1564,6 +1564,17 @@ body.dark-mode .form-notice {
   border: 1px solid var(--border-color);
 }
 
+.btn-cancel-active {
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+
+.btn-cancel-active:hover {
+  background: var(--error-red);
+  color: white;
+  border-color: var(--error-red);
+}
+
 .btn-retry {
   background: var(--error-red);
   color: var(--white);
