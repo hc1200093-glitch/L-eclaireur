@@ -1119,7 +1119,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
         <div className="security-note">
           <svg className="security-icon" viewBox="0 0 24 24" fill="none" stroke="#c9a227" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <div>
-            <strong>Sécurité garantie:</strong> Tous les documents sont détruits selon la norme DOD 5220.22-M après analyse. 
+            <strong>Sécurité garantie:</strong> Tous les documents sont détruits par méthode niveau militaire DOD 5220.22-M après analyse. 
             Les informations ultra-sensibles (NAS, RAMQ, coordonnées bancaires) sont automatiquement masquées.
           </div>
         </div>
