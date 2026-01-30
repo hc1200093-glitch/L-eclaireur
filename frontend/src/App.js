@@ -208,6 +208,23 @@ const VisitorCounter = ({ count }) => (
   </div>
 );
 
+// ===== COMPTEUR DE TÉMOIGNAGES =====
+const TestimonialCounter = ({ count, averageRating }) => (
+  <div className="testimonial-counter">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span>
+      <strong>{count}</strong> témoignage{count > 1 ? 's' : ''} positif{count > 1 ? 's' : ''}
+      {averageRating > 0 && (
+        <span className="average-rating">
+          <span className="star-small">★</span> {averageRating.toFixed(1)}/5
+        </span>
+      )}
+    </span>
+  </div>
+);
+
 // ===== PETITS BOUTONS DE SUPPORT (Ko-fi, PayPal, Stripe à venir) =====
 const SupportIconsSmall = () => (
   <div className="support-icons-small">
