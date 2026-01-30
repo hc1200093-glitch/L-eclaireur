@@ -435,6 +435,7 @@ const MedecinsSection = () => {
         <p>Consultez les décisions publiques et dossiers disciplinaires:</p>
         <a href="https://www.canlii.org/fr/qc/qctat/" target="_blank" rel="noopener noreferrer" className="tat-link">Jurisprudences TAT (CanLII)</a>
         <a href="https://www.cmq.org/fr/proteger-le-public/suivre-dossier-disciplinaire/decisions-disciplinaires" target="_blank" rel="noopener noreferrer" className="tat-link cmq">Décisions disciplinaires (CMQ)</a>
+        <a href="https://www.quebecmedecin.com/" target="_blank" rel="noopener noreferrer" className="tat-link">Québec Médecin (Recherche)</a>
         <a href="https://soquij.qc.ca/" target="_blank" rel="noopener noreferrer" className="tat-link secondary">SOQUIJ</a>
       </div>
 
