@@ -31,7 +31,7 @@ db = client[os.environ.get('DB_NAME')]
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
 # Limite de taille pour Gemini (10 Mo pour éviter timeouts)
-MAX_CHUNK_SIZE = 10 * 1024 * 1024  # 10 Mo
+MAX_CHUNK_SIZE = 8 * 1024 * 1024  # 8 Mo pour fluidité
 
 # Répertoire pour les fichiers temporaires
 UPLOAD_DIR = tempfile.gettempdir()
@@ -225,7 +225,7 @@ def split_pdf_into_chunks(pdf_path: str, max_size_bytes: int = MAX_CHUNK_SIZE) -
         file_size = os.path.getsize(pdf_path)
         avg_page_size = file_size / total_pages
         pages_per_chunk = max(1, int(max_size_bytes / avg_page_size))
-        pages_per_chunk = min(pages_per_chunk, 20)  # Max 30 pages pour plus de fluidité
+        pages_per_chunk = min(pages_per_chunk, 20)  # Max 20 pages pour gros documents
         
         num_chunks = math.ceil(total_pages / pages_per_chunk)
         
