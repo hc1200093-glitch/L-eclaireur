@@ -714,6 +714,11 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [downloadFormat, setDownloadFormat] = useState("pdf");
   const [showDestructionPopup, setShowDestructionPopup] = useState(false);
   const [abortController, setAbortController] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [showLatencyPopup, setShowLatencyPopup] = useState(false);
+  const [analysisId, setAnalysisId] = useState(null);
+  const progressIntervalRef = useRef(null);
+  const latencyTimeoutRef = useRef(null);
 
   const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf'];
 
