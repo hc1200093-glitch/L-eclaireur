@@ -612,12 +612,13 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
     
     try:
         # Sauvegarder temporairement
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        ext = get_file_extension(file.filename)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
             tmp_file.write(contents)
             tmp_path = tmp_file.name
         
-        # Segmenter si nécessaire
-        if file_size > MAX_CHUNK_SIZE:
+        # Segmenter si PDF volumineux
+        if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
             logger.info(f"Fichier volumineux, segmentation en cours...")
             chunk_paths = split_pdf_into_chunks(tmp_path, MAX_CHUNK_SIZE)
         else:
