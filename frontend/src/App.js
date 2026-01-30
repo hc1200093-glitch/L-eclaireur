@@ -778,6 +778,10 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
     setError(null);
     setResult(null);
     
+    // Créer un AbortController pour permettre l'annulation
+    const controller = new AbortController();
+    setAbortController(controller);
+    
     try {
       const formData = new FormData();
       files.forEach(file => formData.append("files", file));
@@ -794,29 +798,37 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       
       const response = await axios.post(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
-        timeout: 1800000,
+        timeout: 2700000, // 45 minutes pour les gros documents
+        signal: controller.signal,
       });
       
       // Normaliser la réponse
       const analysisText = response.data.analysis || response.data.combined_analysis;
       setResult({ ...response.data, analysis: analysisText });
     } catch (err) {
-      if (err.response?.data?.detail) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+        setError("Analyse annulée par l'utilisateur.");
+      } else if (err.response?.data?.detail) {
         setError(`Erreur: ${err.response.data.detail}`);
       } else if (err.code === "ECONNABORTED") {
-        setError("L'analyse a pris trop de temps. Veuillez réessayer.");
+        setError("L'analyse a pris trop de temps. Veuillez réessayer avec moins de documents ou des fichiers plus petits.");
       } else {
         setError("Une erreur est survenue. Veuillez réessayer.");
       }
     } finally {
       setLoading(false);
+      setAbortController(null);
     }
   };
 
   const handleCancel = () => {
+    if (abortController) {
+      abortController.abort();
+    }
     setFiles([]);
     setResult(null);
     setError(null);
+    setLoading(false);
   };
 
   const formatFileSize = (bytes) => {
