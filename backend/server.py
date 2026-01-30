@@ -557,6 +557,130 @@ Retourne ce JSON:
     except Exception as e:
         logger.error(f"Erreur extraction médecins: {str(e)}")
 
+class MultiAnalysisResponse(BaseModel):
+    success: bool
+    total_files: int
+    combined_analysis: str
+    anonymized_for_ai: str
+    message: str
+    files_analyzed: List[str]
+    destruction_confirmed: bool = True
+
+@api_router.post("/analyze-multiple", response_model=MultiAnalysisResponse)
+async def analyze_multiple_documents(files: List[UploadFile] = File(...), consent_ai_learning: bool = False):
+    """Analyse plusieurs documents et retourne un rapport combiné."""
+    
+    if len(files) > 10:
+        raise HTTPException(status_code=400, detail="Maximum 10 fichiers à la fois")
+    
+    # Vérifier tous les formats
+    for f in files:
+        if not is_accepted_format(f.filename):
+            accepted = ", ".join(ACCEPTED_FORMATS.keys())
+            raise HTTPException(status_code=400, detail=f"Format non accepté pour {f.filename}. Formats acceptés: {accepted}")
+    
+    all_analyses = []
+    files_analyzed = []
+    tmp_paths = []
+    
+    try:
+        for idx, file in enumerate(files, 1):
+            contents = await file.read()
+            file_size = len(contents)
+            
+            if file_size > 100 * 1024 * 1024:
+                continue  # Skip files over 100 Mo
+            
+            ext = get_file_extension(file.filename)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
+                tmp_file.write(contents)
+                tmp_path = tmp_file.name
+                tmp_paths.append(tmp_path)
+            
+            logger.info(f"Analyse du fichier {idx}/{len(files)}: {file.filename}")
+            
+            # Analyser le document
+            mime_type = ACCEPTED_FORMATS.get(ext, 'application/octet-stream')
+            analysis = await analyze_single_file(tmp_path, mime_type, file.filename, idx, len(files))
+            all_analyses.append(f"## 📄 Document {idx}: {file.filename}\n\n{analysis}")
+            files_analyzed.append(file.filename)
+        
+        # Combiner toutes les analyses
+        combined = "# 📋 RAPPORT D'ANALYSE COMBINÉ - L'ÉCLAIREUR\n\n"
+        combined += f"**{len(files_analyzed)} document(s) analysé(s)**\n\n"
+        combined += "---\n\n".join(all_analyses)
+        
+        # Anonymisation
+        report_analysis = anonymize_for_report(combined)
+        ai_analysis = anonymize_for_ai_learning(combined) if consent_ai_learning else ""
+        
+        # Destruction sécurisée
+        for path in tmp_paths:
+            if os.path.exists(path):
+                destruction_securisee(path)
+        
+        return MultiAnalysisResponse(
+            success=True,
+            total_files=len(files_analyzed),
+            combined_analysis=report_analysis,
+            anonymized_for_ai=ai_analysis,
+            message=f"{len(files_analyzed)} document(s) analysé(s). Tous les fichiers ont été détruits de manière sécurisée.",
+            files_analyzed=files_analyzed,
+            destruction_confirmed=True
+        )
+        
+    except Exception as e:
+        # Destruction en cas d'erreur
+        for path in tmp_paths:
+            if os.path.exists(path):
+                destruction_securisee(path)
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
+
+async def analyze_single_file(file_path: str, mime_type: str, filename: str, idx: int, total: int) -> str:
+    """Analyse un seul fichier avec Gemini."""
+    import asyncio
+    
+    date_analyse = datetime.now(timezone.utc).strftime("%d/%m/%Y à %H:%M UTC")
+    
+    for attempt in range(3):
+        try:
+            chat = LlmChat(
+                api_key=EMERGENT_LLM_KEY,
+                session_id=f"analysis-{uuid.uuid4()}",
+                system_message=SYSTEM_MESSAGE_ANALYSE.replace("{date_analyse}", date_analyse)
+            ).with_model("gemini", "gemini-2.5-flash")
+            
+            file_content = FileContentWithMimeType(
+                file_path=file_path,
+                mime_type=mime_type
+            )
+            
+            user_message = UserMessage(
+                text=f"""Analyse ce document ({filename} - fichier {idx}/{total}) et produis un RAPPORT DE DÉFENSE.
+
+RAPPELS:
+1. EXPLIQUE chaque terme médical/technique entre parenthèses
+2. Indique les numéros de pages si possible
+3. TABLEAU RÉCAPITULATIF DES CONTRADICTIONS en fin de rapport
+4. Inclus le BARÈME DES INDEMNISATIONS applicable
+5. Prépare des QUESTIONS STRATÉGIQUES pour l'audience TAT
+
+ANONYMISATION - MASQUER uniquement: NAS, RAMQ, Permis, Coordonnées bancaires
+GARDER EN CLAIR: noms, téléphones, adresses""",
+                file_contents=[file_content]
+            )
+            
+            response = await chat.send_message(user_message)
+            return response
+            
+        except Exception as e:
+            if attempt < 2:
+                await asyncio.sleep(10)
+                continue
+            raise e
+    
+    return f"Erreur lors de l'analyse de {filename}"
+
 # ===== ROUTES =====
 @api_router.get("/")
 async def root():
