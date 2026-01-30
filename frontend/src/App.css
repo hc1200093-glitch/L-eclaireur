@@ -538,6 +538,7 @@ body.dark-mode .home-credit strong {
   padding: 0.5rem 1rem;
   border-radius: 20px;
   margin-top: 1rem;
+  margin-right: 0.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
@@ -549,6 +550,39 @@ body.dark-mode .home-credit strong {
 .visitor-counter span {
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+/* Compteur témoignages */
+.testimonial-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-gold-light) 0%, var(--accent-gold) 100%);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(201, 162, 39, 0.3);
+}
+
+.testimonial-counter svg {
+  width: 18px; height: 18px;
+  stroke: white;
+}
+
+.testimonial-counter span {
+  font-size: 0.9rem;
+  color: white;
+  font-weight: 500;
+}
+
+.average-rating {
+  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid rgba(255,255,255,0.5);
+}
+
+.star-small {
+  color: white;
 }
 
 /* Hero */
