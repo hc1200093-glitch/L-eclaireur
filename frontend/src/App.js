@@ -643,7 +643,7 @@ const HomePage = ({ onStartAnalysis }) => {
             <div className="feature-card">
               <div className="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
               <h4>1. Téléversez</h4>
-              <p>Déposez votre document PDF</p>
+              <p>Déposez vos documents</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
