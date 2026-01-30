@@ -666,7 +666,7 @@ const HomePage = ({ onStartAnalysis }) => {
         <section className="trust-section">
           <div className="trust-badge">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Sécurité DOD 5220.22-M</span>
+            <span>Destruction par méthode niveau militaire DOD 5220.22-M</span>
           </div>
           <p>Tous les documents sont détruits de manière sécurisée après analyse</p>
         </section>
