@@ -706,13 +706,20 @@ const HomePage = ({ onStartAnalysis }) => {
 
 // ===== PAGE D'ANALYSE =====
 const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [downloadFormat, setDownloadFormat] = useState("pdf");
   const [showDestructionPopup, setShowDestructionPopup] = useState(false);
+
+  const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf'];
+
+  const isAcceptedFormat = (filename) => {
+    const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    return ACCEPTED_FORMATS.includes(ext);
+  };
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -726,46 +733,72 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
     e.stopPropagation();
     setDragActive(false);
     setError(null);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.type === "application/pdf") {
-        setFile(droppedFile);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      const validFiles = droppedFiles.filter(f => isAcceptedFormat(f.name));
+      const invalidFiles = droppedFiles.filter(f => !isAcceptedFormat(f.name));
+      
+      if (invalidFiles.length > 0) {
+        setError(`Formats non acceptés: ${invalidFiles.map(f => f.name).join(', ')}`);
+      }
+      
+      if (validFiles.length > 0) {
+        setFiles(prev => [...prev, ...validFiles].slice(0, 10)); // Max 10 fichiers
         setResult(null);
-      } else {
-        setError("Seuls les fichiers PDF sont acceptés");
       }
     }
   }, []);
 
   const handleFileSelect = (e) => {
     setError(null);
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.type === "application/pdf") {
-        setFile(selectedFile);
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      const validFiles = selectedFiles.filter(f => isAcceptedFormat(f.name));
+      const invalidFiles = selectedFiles.filter(f => !isAcceptedFormat(f.name));
+      
+      if (invalidFiles.length > 0) {
+        setError(`Formats non acceptés: ${invalidFiles.map(f => f.name).join(', ')}`);
+      }
+      
+      if (validFiles.length > 0) {
+        setFiles(prev => [...prev, ...validFiles].slice(0, 10));
         setResult(null);
-      } else {
-        setError("Seuls les fichiers PDF sont acceptés");
       }
     }
   };
 
+  const removeFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleAnalyze = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
     setLoading(true);
     setError(null);
     setResult(null);
     
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      files.forEach(file => formData.append("files", file));
       
-      const response = await axios.post(`${API}/analyze?consent_ai_learning=${consentAiLearning}`, formData, {
+      const endpoint = files.length === 1 ? 
+        `${API}/analyze?consent_ai_learning=${consentAiLearning}` :
+        `${API}/analyze-multiple?consent_ai_learning=${consentAiLearning}`;
+      
+      // Pour un seul fichier, utiliser l'ancien endpoint
+      if (files.length === 1) {
+        formData.delete("files");
+        formData.append("file", files[0]);
+      }
+      
+      const response = await axios.post(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         timeout: 1800000,
       });
       
-      setResult(response.data);
+      // Normaliser la réponse
+      const analysisText = response.data.analysis || response.data.combined_analysis;
+      setResult({ ...response.data, analysis: analysisText });
     } catch (err) {
       if (err.response?.data?.detail) {
         setError(`Erreur: ${err.response.data.detail}`);
@@ -780,7 +813,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   };
 
   const handleCancel = () => {
-    setFile(null);
+    setFiles([]);
     setResult(null);
     setError(null);
   };
