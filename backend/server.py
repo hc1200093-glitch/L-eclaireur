@@ -878,49 +878,49 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 combined_analysis += "\n\n---\n\n".join(all_analyses)
                 total_segments = len(chunk_paths)
             
-        else:
-            # Traitement normal pour les autres fichiers
-            # Segmenter si PDF volumineux
-            if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
-                logger.info(f"Fichier volumineux, segmentation en cours...")
-                chunk_paths = split_pdf_into_chunks(tmp_path, MAX_CHUNK_SIZE)
             else:
-                chunk_paths = [tmp_path]
-            
-            # Analyser chaque segment
-            all_analyses = []
-            total_segments = len(chunk_paths)
-            
-            for i, chunk_path in enumerate(chunk_paths, 1):
-                logger.info(f"Analyse du segment {i}/{total_segments}...")
-                segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
-                # Filtrer les résultats None
-                if segment_analysis:
-                    all_analyses.append(segment_analysis)
+                # Traitement normal pour les autres fichiers
+                # Segmenter si PDF volumineux
+                if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
+                    logger.info(f"Fichier volumineux, segmentation en cours...")
+                    chunk_paths = split_pdf_into_chunks(tmp_path, MAX_CHUNK_SIZE)
                 else:
-                    all_analyses.append(f"[Segment {i} - Analyse non disponible]")
+                    chunk_paths = [tmp_path]
+                
+                # Analyser chaque segment
+                all_analyses = []
+                total_segments = len(chunk_paths)
+                
+                for i, chunk_path in enumerate(chunk_paths, 1):
+                    logger.info(f"Analyse du segment {i}/{total_segments}...")
+                    segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
+                    # Filtrer les résultats None
+                    if segment_analysis:
+                        all_analyses.append(segment_analysis)
+                    else:
+                        all_analyses.append(f"[Segment {i} - Analyse non disponible]")
+                
+                # Combiner les analyses
+                if total_segments > 1:
+                    combined_analysis = f"📄 **ANALYSE COMPLÈTE DU DOCUMENT** ({total_segments} segments)\n\n"
+                    combined_analysis += "---\n\n".join([
+                        f"### Segment {i+1}/{total_segments}\n\n{analysis}" 
+                        for i, analysis in enumerate(all_analyses)
+                    ])
+                else:
+                    combined_analysis = all_analyses[0] if all_analyses else "[Analyse non disponible]"
             
-            # Combiner les analyses
-            if total_segments > 1:
-                combined_analysis = f"📄 **ANALYSE COMPLÈTE DU DOCUMENT** ({total_segments} segments)\n\n"
-                combined_analysis += "---\n\n".join([
-                    f"### Segment {i+1}/{total_segments}\n\n{analysis}" 
-                    for i, analysis in enumerate(all_analyses)
-                ])
-            else:
-                combined_analysis = all_analyses[0] if all_analyses else "[Analyse non disponible]"
-        
-        # Anonymisation pour le rapport (légère)
-        report_analysis = anonymize_for_report(combined_analysis)
-        
-        # Anonymisation complète pour l'IA (si consentement)
-        ai_analysis = ""
-        if consent_ai_learning:
-            ai_analysis = anonymize_for_ai_learning(combined_analysis)
-            logger.info("Version anonymisée créée pour apprentissage IA")
-        
-        # Extraire les médecins
-        await extract_and_update_medecins(combined_analysis, file.filename)
+            # Anonymisation pour le rapport (légère)
+            report_analysis = anonymize_for_report(combined_analysis)
+            
+            # Anonymisation complète pour l'IA (si consentement)
+            ai_analysis = ""
+            if consent_ai_learning:
+                ai_analysis = anonymize_for_ai_learning(combined_analysis)
+                logger.info("Version anonymisée créée pour apprentissage IA")
+            
+            # Extraire les médecins
+            await extract_and_update_medecins(combined_analysis, file.filename)
         
         # DESTRUCTION SÉCURISÉE DOD 5220.22-M
         destruction_success = True
