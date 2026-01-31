@@ -870,7 +870,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
         // Polling pour suivre la progression
         let completed = false;
         let attempts = 0;
-        const maxAttempts = 300; // 5 minutes max de polling (300 * 1s)
+        const maxAttempts = 2400; // 2 heures max de polling (2400 * 3s = 7200s)
         
         while (!completed && attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 3000)); // Attendre 3 secondes
