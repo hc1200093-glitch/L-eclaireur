@@ -693,15 +693,17 @@ GARDER EN CLAIR: noms, téléphones, adresses""",
             )
             
             response = await chat.send_message(user_message)
-            return response
+            return response if response else f"[Analyse de {filename} - Réponse vide]"
             
         except Exception as e:
+            logger.error(f"Erreur analyse {filename}: {str(e)[:100]}")
             if attempt < 2:
                 await asyncio.sleep(10)
                 continue
-            raise e
+            # Retourner un message d'erreur au lieu de lever une exception
+            return f"[Erreur lors de l'analyse de {filename} - Serveurs temporairement indisponibles]"
     
-    return f"Erreur lors de l'analyse de {filename}"
+    return f"[Erreur lors de l'analyse de {filename}]"
 
 # ===== ROUTES =====
 @api_router.get("/")
