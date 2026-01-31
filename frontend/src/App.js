@@ -718,6 +718,8 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [showLatencyPopup, setShowLatencyPopup] = useState(false);
   const [analysisId, setAnalysisId] = useState(null);
   const [showLargeFileWarning, setShowLargeFileWarning] = useState(false);
+  const [isSplitting, setIsSplitting] = useState(false);
+  const [largeFile, setLargeFile] = useState(null);
   const progressIntervalRef = useRef(null);
   const latencyTimeoutRef = useRef(null);
 
@@ -731,9 +733,50 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
 
   // Vérifier si un fichier est trop gros et afficher l'avertissement
   const checkLargeFile = (fileList) => {
-    const hasLargeFile = fileList.some(f => f.size > LARGE_FILE_THRESHOLD);
-    if (hasLargeFile) {
+    const bigFile = fileList.find(f => f.size > LARGE_FILE_THRESHOLD && f.name.toLowerCase().endsWith('.pdf'));
+    if (bigFile) {
+      setLargeFile(bigFile);
       setShowLargeFileWarning(true);
+    }
+  };
+
+  // Fonction pour découper le PDF et télécharger le ZIP
+  const handleSplitPdf = async () => {
+    if (!largeFile) return;
+    
+    setIsSplitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", largeFile);
+      
+      const response = await axios.post(`${API}/split-pdf`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        responseType: 'blob',
+        timeout: 120000, // 2 minutes max pour le découpage
+      });
+      
+      // Télécharger le ZIP
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = largeFile.name.replace('.pdf', '') + '_decoupe.zip';
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      // Fermer le popup et retirer le gros fichier
+      setShowLargeFileWarning(false);
+      setFiles(prev => prev.filter(f => f !== largeFile));
+      setLargeFile(null);
+      
+    } catch (err) {
+      console.error("Erreur découpage:", err);
+      alert("Erreur lors du découpage du PDF. Veuillez réessayer.");
+    } finally {
+      setIsSplitting(false);
     }
   };
 
