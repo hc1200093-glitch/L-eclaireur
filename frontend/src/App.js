@@ -1274,23 +1274,6 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
               <h2>Analyse complétée</h2>
             </div>
             
-            {/* Lien de récupération temporaire */}
-            {result.report_id && (
-              <div className="recovery-link-section">
-                <div className="recovery-info">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  <div>
-                    <strong>Lien de récupération (valide 15 minutes)</strong>
-                    <p>En cas de problème, vous pouvez récupérer ce rapport via ce lien :</p>
-                    <a href={`${API}/report/${result.report_id}`} target="_blank" rel="noopener noreferrer" className="recovery-link">
-                      {`${API}/report/${result.report_id}`}
-                    </a>
-                    <p className="recovery-note">⚠️ Copiez ce lien maintenant. Après 15 minutes, le rapport sera détruit par méthode DOD 5220.22-M</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
             <div className="result-content">
               <pre className="analysis-text">{result.analysis}</pre>
             </div>
