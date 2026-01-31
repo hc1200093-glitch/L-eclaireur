@@ -714,6 +714,7 @@ ACCEPTED_FORMATS = {
     '.bmp': 'image/bmp',
     '.txt': 'text/plain',
     '.rtf': 'application/rtf',
+    '.zip': 'application/zip',
 }
 
 def get_file_extension(filename: str) -> str:
@@ -724,6 +725,30 @@ def is_accepted_format(filename: str) -> bool:
     """Vérifie si le format est accepté."""
     ext = get_file_extension(filename)
     return ext in ACCEPTED_FORMATS
+
+def extract_pdfs_from_zip(zip_path: str) -> List[str]:
+    """Extrait tous les fichiers PDF d'un ZIP et retourne leurs chemins temporaires."""
+    extracted_paths = []
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            for file_info in zip_ref.infolist():
+                if file_info.filename.lower().endswith('.pdf') and not file_info.filename.startswith('__MACOSX'):
+                    # Extraire le PDF
+                    extracted_name = os.path.basename(file_info.filename)
+                    if extracted_name:  # Ignorer les dossiers
+                        temp_path = os.path.join(tempfile.gettempdir(), f"extracted_{uuid.uuid4()}_{extracted_name}")
+                        with zip_ref.open(file_info) as source, open(temp_path, 'wb') as target:
+                            target.write(source.read())
+                        extracted_paths.append(temp_path)
+                        logger.info(f"PDF extrait du ZIP: {extracted_name}")
+        return extracted_paths
+    except Exception as e:
+        logger.error(f"Erreur extraction ZIP: {str(e)}")
+        # Nettoyer en cas d'erreur
+        for path in extracted_paths:
+            if os.path.exists(path):
+                destruction_securisee(path)
+        return []
 
 @api_router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
