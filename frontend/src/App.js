@@ -1007,13 +1007,11 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
   const handleDownload = async () => {
-    if (!result) return;
+    if (!result || !result.analysis) return;
     
-    const filename = files.length === 1 ? files[0]?.name?.replace(/\.[^/.]+$/, '') : 'rapport_analyse_combine';
+    const filename = result.filename ? result.filename.replace(/\.[^/.]+$/, '') : 'rapport_analyse';
     const content = result.analysis;
-    const title = files.length === 1 ? 
-      `Rapport d'Analyse Défense - ${filename}` : 
-      `Rapport d'Analyse Défense Combiné - ${files.length} documents`;
+    const title = `Rapport d'Analyse Défense - ${filename}`;
     const date = new Date().toLocaleDateString('fr-CA');
     
     switch (downloadFormat) {
@@ -1030,6 +1028,8 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   };
 
   const handlePrint = () => {
+    if (!result || !result.analysis) return;
+    
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html><head><title>Rapport L'Éclaireur</title>
