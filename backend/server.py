@@ -752,6 +752,30 @@ def extract_pdfs_from_zip(zip_path: str) -> List[str]:
                 destruction_securisee(path)
         return []
 
+def extract_pdfs_from_rar(rar_path: str) -> List[str]:
+    """Extrait tous les fichiers PDF d'un RAR et retourne leurs chemins temporaires."""
+    extracted_paths = []
+    try:
+        with rarfile.RarFile(rar_path, 'r') as rar_ref:
+            for file_info in rar_ref.infolist():
+                if file_info.filename.lower().endswith('.pdf'):
+                    # Extraire le PDF
+                    extracted_name = os.path.basename(file_info.filename)
+                    if extracted_name:  # Ignorer les dossiers
+                        temp_path = os.path.join(tempfile.gettempdir(), f"extracted_{uuid.uuid4()}_{extracted_name}")
+                        with rar_ref.open(file_info) as source, open(temp_path, 'wb') as target:
+                            target.write(source.read())
+                        extracted_paths.append(temp_path)
+                        logger.info(f"PDF extrait du RAR: {extracted_name}")
+        return extracted_paths
+    except Exception as e:
+        logger.error(f"Erreur extraction RAR: {str(e)}")
+        # Nettoyer en cas d'erreur
+        for path in extracted_paths:
+            if os.path.exists(path):
+                destruction_securisee(path)
+        return []
+
 @api_router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
     """Analyse un document et retourne un rapport de défense."""
