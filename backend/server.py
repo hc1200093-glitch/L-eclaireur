@@ -838,6 +838,93 @@ async def increment_visitor_count():
     stats = await db.stats.find_one({"type": "visitors"})
     return {"count": stats.get("count", 0)}
 
+# ===== DÉCOUPAGE PDF AUTOMATIQUE =====
+SPLIT_TARGET_SIZE = 15 * 1024 * 1024  # 15 Mo par partie (sous la limite Gemini de 20 Mo)
+
+@api_router.post("/split-pdf")
+async def split_pdf_for_download(file: UploadFile = File(...)):
+    """
+    Découpe un gros PDF en plusieurs parties téléchargeables.
+    Retourne un fichier ZIP contenant toutes les parties.
+    """
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés")
+    
+    contents = await file.read()
+    file_size = len(contents)
+    
+    # Vérifier si le fichier nécessite un découpage
+    if file_size <= SPLIT_TARGET_SIZE:
+        raise HTTPException(status_code=400, detail="Ce fichier est assez petit pour être analysé directement (< 15 Mo)")
+    
+    tmp_path = None
+    try:
+        # Sauvegarder temporairement
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            tmp_file.write(contents)
+            tmp_path = tmp_file.name
+        
+        reader = PdfReader(tmp_path)
+        total_pages = len(reader.pages)
+        
+        if total_pages == 0:
+            raise HTTPException(status_code=400, detail="Le PDF semble vide")
+        
+        # Calculer le nombre de pages par partie
+        avg_page_size = file_size / total_pages
+        pages_per_part = max(1, int(SPLIT_TARGET_SIZE / avg_page_size))
+        num_parts = math.ceil(total_pages / pages_per_part)
+        
+        logger.info(f"Découpage de {file.filename}: {total_pages} pages en {num_parts} parties de ~{pages_per_part} pages")
+        
+        # Créer le ZIP en mémoire
+        zip_buffer = io.BytesIO()
+        base_filename = file.filename.rsplit('.', 1)[0]
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for i in range(num_parts):
+                writer = PdfWriter()
+                start_page = i * pages_per_part
+                end_page = min((i + 1) * pages_per_part, total_pages)
+                
+                for page_num in range(start_page, end_page):
+                    writer.add_page(reader.pages[page_num])
+                
+                # Écrire la partie dans un buffer
+                part_buffer = io.BytesIO()
+                writer.write(part_buffer)
+                part_buffer.seek(0)
+                
+                # Ajouter au ZIP
+                part_filename = f"{base_filename}_partie_{i+1}_sur_{num_parts}.pdf"
+                zip_file.writestr(part_filename, part_buffer.getvalue())
+                
+                logger.info(f"Partie {i+1}/{num_parts} créée: pages {start_page+1}-{end_page}")
+        
+        # Nettoyer le fichier temporaire
+        if tmp_path and os.path.exists(tmp_path):
+            destruction_securisee(tmp_path)
+        
+        # Retourner le ZIP
+        zip_buffer.seek(0)
+        zip_filename = f"{base_filename}_decoupe_{num_parts}_parties.zip"
+        
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f"attachment; filename={zip_filename}",
+                "X-Parts-Count": str(num_parts),
+                "X-Pages-Per-Part": str(pages_per_part)
+            }
+        )
+        
+    except Exception as e:
+        if tmp_path and os.path.exists(tmp_path):
+            destruction_securisee(tmp_path)
+        logger.error(f"Erreur découpage PDF: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du découpage: {str(e)}")
+
 # ===== TÉMOIGNAGES =====
 class TestimonialCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=50)
