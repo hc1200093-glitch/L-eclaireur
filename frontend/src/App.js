@@ -1138,7 +1138,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
               <p className="upload-text">Glissez-déposez vos documents ici</p>
               <p className="upload-subtext">ou</p>
               <label className="file-select-btn">
-                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf,.zip" onChange={handleFileSelect} hidden multiple data-testid="file-input"/>
+                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf,.zip,.rar" onChange={handleFileSelect} hidden multiple data-testid="file-input"/>
                 Sélectionner des fichiers
               </label>
               <p className="upload-hint">Formats acceptés: PDF, Word, Images (JPG, PNG, TIFF), TXT, RTF, ZIP</p>
@@ -1161,7 +1161,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
                 ))}
               </div>
               <label className="add-more-btn">
-                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf,.zip" onChange={handleFileSelect} hidden multiple/>
+                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf,.zip,.rar" onChange={handleFileSelect} hidden multiple/>
                 + Ajouter d'autres fichiers
               </label>
             </div>
