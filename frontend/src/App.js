@@ -837,10 +837,6 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const handleAnalyze = async () => {
     if (files.length === 0) return;
     
-    // Créer un ID unique pour cette analyse
-    const currentAnalysisId = Date.now();
-    setAnalysisId(currentAnalysisId);
-    
     setLoading(true);
     setError(null);
     setResult(null);
@@ -850,74 +846,147 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
     const controller = new AbortController();
     setAbortController(controller);
     
-    // Simuler la progression basée sur la taille des fichiers
-    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
-    const estimatedTime = Math.max(30, Math.min(300, totalSize / (1024 * 1024) * 5)); // 5 sec par Mo, min 30s, max 300s
-    let startTime = Date.now();
-    let lastProgressUpdate = Date.now();
-    
-    progressIntervalRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startTime) / 1000;
-      const estimatedProgress = Math.min(95, (elapsed / estimatedTime) * 100);
-      setProgress(Math.round(estimatedProgress));
-      
-      // Vérifier si latence (pas de mise à jour depuis 30 secondes après 10% de progression)
-      const timeSinceLastUpdate = Date.now() - lastProgressUpdate;
-      if (timeSinceLastUpdate > 30000 && estimatedProgress > 10 && !showLatencyPopup) {
-        setShowLatencyPopup(true);
-        latencyTimeoutRef.current = setTimeout(() => {
-          setShowLatencyPopup(false);
-        }, 10000); // Fermer après 10 secondes
-        lastProgressUpdate = Date.now();
-      }
-    }, 1000);
-    
     try {
       const formData = new FormData();
-      files.forEach(file => formData.append("files", file));
       
-      const endpoint = files.length === 1 ? 
-        `${API}/analyze?consent_ai_learning=${consentAiLearning}` :
-        `${API}/analyze-multiple?consent_ai_learning=${consentAiLearning}`;
-      
-      // Pour un seul fichier, utiliser l'ancien endpoint
+      // Pour un seul fichier, utiliser l'endpoint asynchrone
       if (files.length === 1) {
-        formData.delete("files");
         formData.append("file", files[0]);
+        
+        // Lancer l'analyse asynchrone
+        const startResponse = await axios.post(
+          `${API}/analyze-async?consent_ai_learning=${consentAiLearning}`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            timeout: 60000, // 1 minute pour l'upload
+            signal: controller.signal,
+          }
+        );
+        
+        const jobId = startResponse.data.job_id;
+        console.log("Analyse lancée, job_id:", jobId);
+        
+        // Polling pour suivre la progression
+        let completed = false;
+        let attempts = 0;
+        const maxAttempts = 300; // 5 minutes max de polling (300 * 1s)
+        
+        while (!completed && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 3000)); // Attendre 3 secondes
+          attempts++;
+          
+          try {
+            const statusResponse = await axios.get(`${API}/analyze-status/${jobId}`, {
+              signal: controller.signal,
+            });
+            
+            const status = statusResponse.data;
+            setProgress(status.progress || 0);
+            
+            if (status.status === "completed") {
+              completed = true;
+              setProgress(100);
+              setResult({
+                success: true,
+                analysis: status.analysis,
+                filename: status.filename,
+                report_id: status.report_id,
+                message: status.message
+              });
+            } else if (status.status === "failed") {
+              completed = true;
+              // Essayer de récupérer le rapport partiel
+              if (status.analysis) {
+                setResult({
+                  success: true,
+                  analysis: status.analysis,
+                  filename: status.filename,
+                  message: "Analyse partielle récupérée"
+                });
+              } else {
+                setError(`Erreur: ${status.message}`);
+              }
+            }
+            // Afficher le popup de latence si ça prend du temps
+            if (attempts > 20 && !showLatencyPopup && status.status === "in_progress") {
+              setShowLatencyPopup(true);
+              setTimeout(() => setShowLatencyPopup(false), 10000);
+            }
+          } catch (pollError) {
+            console.log("Erreur de polling, retry...", pollError.message);
+          }
+        }
+        
+        if (!completed) {
+          // Timeout de polling - essayer de récupérer le dernier rapport
+          try {
+            const latestReport = await axios.get(`${API}/reports/latest`);
+            if (latestReport.data.analysis) {
+              setResult({
+                success: true,
+                analysis: latestReport.data.analysis,
+                filename: latestReport.data.filename,
+                report_id: latestReport.data.report_id,
+                message: `Rapport récupéré (${latestReport.data.segments}/${latestReport.data.total_segments} segments)`
+              });
+            } else {
+              setError("L'analyse prend trop de temps. Vérifiez /api/reports/latest pour récupérer le rapport partiel.");
+            }
+          } catch {
+            setError("L'analyse prend trop de temps. Vérifiez /api/reports/latest pour récupérer le rapport partiel.");
+          }
+        }
+        
+      } else {
+        // Pour plusieurs fichiers, utiliser l'ancien endpoint
+        files.forEach(file => formData.append("files", file));
+        
+        const response = await axios.post(
+          `${API}/analyze-multiple?consent_ai_learning=${consentAiLearning}`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            timeout: 2700000,
+            signal: controller.signal,
+          }
+        );
+        
+        setProgress(100);
+        const analysisText = response.data.analysis || response.data.combined_analysis;
+        setResult({ ...response.data, analysis: analysisText });
       }
       
-      const response = await axios.post(endpoint, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 2700000, // 45 minutes pour les gros documents
-        signal: controller.signal,
-      });
-      
-      // Vérifier si c'est toujours la même analyse (pas une nouvelle lancée entre temps)
-      if (analysisId !== currentAnalysisId && analysisId !== null) {
-        console.log("Analyse ignorée car une nouvelle a été lancée");
-        return;
-      }
-      
-      setProgress(100);
-      // Normaliser la réponse
-      const analysisText = response.data.analysis || response.data.combined_analysis;
-      setResult({ ...response.data, analysis: analysisText });
     } catch (err) {
       if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
         setError("Analyse annulée par l'utilisateur.");
       } else if (err.response?.data?.detail) {
         setError(`Erreur: ${err.response.data.detail}`);
       } else if (err.code === "ECONNABORTED") {
-        setError("L'analyse a pris trop de temps. Veuillez réessayer avec moins de documents ou des fichiers plus petits.");
+        setError("L'upload a pris trop de temps. Veuillez réessayer.");
       } else {
-        setError("Une erreur est survenue. Veuillez réessayer.");
+        // Essayer de récupérer le dernier rapport
+        try {
+          const latestReport = await axios.get(`${API}/reports/latest`);
+          if (latestReport.data.analysis) {
+            setResult({
+              success: true,
+              analysis: latestReport.data.analysis,
+              filename: latestReport.data.filename,
+              report_id: latestReport.data.report_id,
+              message: `Rapport récupéré (${latestReport.data.segments}/${latestReport.data.total_segments} segments)`
+            });
+            return;
+          }
+        } catch {}
+        setError("Une erreur est survenue. Vérifiez /api/reports/latest pour récupérer un éventuel rapport partiel.");
       }
     } finally {
-      // Nettoyer les intervalles
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
+      setShowLatencyPopup(false);
+      setLoading(false);
+      setAbortController(null);
+    }
+  };
       if (latencyTimeoutRef.current) {
         clearTimeout(latencyTimeoutRef.current);
         latencyTimeoutRef.current = null;
