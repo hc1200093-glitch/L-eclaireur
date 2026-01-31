@@ -900,7 +900,10 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 else:
                     chunk_paths = [tmp_path]
                 
-                # Analyser chaque segment
+                # Créer un ID de rapport pour sauvegarde progressive
+                progress_report_id = str(uuid.uuid4())
+                
+                # Analyser chaque segment et sauvegarder progressivement
                 all_analyses = []
                 total_segments = len(chunk_paths)
                 
@@ -912,6 +915,29 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                         all_analyses.append(segment_analysis)
                     else:
                         all_analyses.append(f"[Segment {i} - Analyse non disponible]")
+                    
+                    # Sauvegarder le rapport partiel après chaque segment
+                    partial_analysis = f"📄 **ANALYSE EN COURS** ({i}/{total_segments} segments complétés)\n\n"
+                    partial_analysis += "---\n\n".join([
+                        f"### Segment {j+1}/{total_segments}\n\n{str(a) if a else '[Non disponible]'}" 
+                        for j, a in enumerate(all_analyses)
+                    ])
+                    
+                    await db.temp_reports.update_one(
+                        {"report_id": progress_report_id},
+                        {"$set": {
+                            "report_id": progress_report_id,
+                            "filename": file.filename,
+                            "analysis": anonymize_for_report(partial_analysis),
+                            "created_at": datetime.now(timezone.utc),
+                            "expires_at": datetime.now(timezone.utc).timestamp() + 900,
+                            "segments": i,
+                            "total_segments": total_segments,
+                            "status": "en_cours" if i < total_segments else "termine"
+                        }},
+                        upsert=True
+                    )
+                    logger.info(f"Rapport partiel sauvegardé: {progress_report_id} ({i}/{total_segments})")
                 
                 # Combiner les analyses avec protection contre None
                 if total_segments > 1:
