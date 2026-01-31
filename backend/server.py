@@ -716,6 +716,7 @@ ACCEPTED_FORMATS = {
     '.txt': 'text/plain',
     '.rtf': 'application/rtf',
     '.zip': 'application/zip',
+    '.rar': 'application/x-rar-compressed',
 }
 
 def get_file_extension(filename: str) -> str:
