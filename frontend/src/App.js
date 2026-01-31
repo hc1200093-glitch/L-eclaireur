@@ -987,15 +987,6 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       setAbortController(null);
     }
   };
-      if (latencyTimeoutRef.current) {
-        clearTimeout(latencyTimeoutRef.current);
-        latencyTimeoutRef.current = null;
-      }
-      setShowLatencyPopup(false);
-      setLoading(false);
-      setAbortController(null);
-    }
-  };
 
   const handleCancel = () => {
     if (abortController) {
