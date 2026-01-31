@@ -874,14 +874,19 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                             pdf_analyses.append(f"[Segment {seg_idx} - Analyse non disponible]")
                     
                     if len(pdf_chunks) > 1:
-                        combined = f"## 📄 {pdf_name}\n\n" + "\n---\n".join(pdf_analyses)
+                        # S'assurer que tous les éléments sont des chaînes
+                        safe_analyses = [str(a) if a is not None else "[Analyse non disponible]" for a in pdf_analyses]
+                        combined = f"## 📄 {pdf_name}\n\n" + "\n---\n".join(safe_analyses)
                     else:
-                        combined = f"## 📄 {pdf_name}\n\n{pdf_analyses[0] if pdf_analyses else '[Analyse non disponible]'}"
+                        first_analysis = str(pdf_analyses[0]) if pdf_analyses and pdf_analyses[0] else '[Analyse non disponible]'
+                        combined = f"## 📄 {pdf_name}\n\n{first_analysis}"
                     
                     all_analyses.append(combined)
                 
+                # S'assurer que tous les éléments sont des chaînes avant le join
+                safe_all_analyses = [str(a) if a is not None else "[Analyse non disponible]" for a in all_analyses]
                 combined_analysis = f"# 📋 ANALYSE DE {total_files} DOCUMENT(S) ({archive_type})\n\n"
-                combined_analysis += "\n\n---\n\n".join(all_analyses)
+                combined_analysis += "\n\n---\n\n".join(safe_all_analyses)
                 total_segments = len(chunk_paths)
             
             else:
