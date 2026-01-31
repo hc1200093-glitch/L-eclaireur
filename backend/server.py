@@ -842,12 +842,16 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 pdf_analyses = []
                 for seg_idx, chunk_path in enumerate(pdf_chunks, 1):
                     analysis = await analyze_pdf_segment(chunk_path, seg_idx, len(pdf_chunks))
-                    pdf_analyses.append(analysis)
+                    # Filtrer les résultats None
+                    if analysis:
+                        pdf_analyses.append(analysis)
+                    else:
+                        pdf_analyses.append(f"[Segment {seg_idx} - Analyse non disponible]")
                 
                 if len(pdf_chunks) > 1:
                     combined = f"## 📄 {pdf_name}\n\n" + "\n---\n".join(pdf_analyses)
                 else:
-                    combined = f"## 📄 {pdf_name}\n\n{pdf_analyses[0]}"
+                    combined = f"## 📄 {pdf_name}\n\n{pdf_analyses[0] if pdf_analyses else '[Analyse non disponible]'}"
                 
                 all_analyses.append(combined)
             
