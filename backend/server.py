@@ -14,6 +14,7 @@ import tempfile
 import re
 import math
 import zipfile
+import rarfile
 import io
 
 # PDF manipulation
