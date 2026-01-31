@@ -1053,7 +1053,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       {showLargeFileWarning && (
         <div className="large-file-warning-overlay">
           <div className="large-file-warning-popup">
-            <button className="close-popup-btn" onClick={() => setShowLargeFileWarning(false)} title="Fermer">×</button>
+            <button className="close-popup-btn" onClick={() => { setShowLargeFileWarning(false); setLargeFile(null); }} title="Fermer">×</button>
             <div className="warning-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -1063,12 +1063,42 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
             </div>
             <h3>Fichier volumineux détecté</h3>
             <p>
-              Votre fichier dépasse <strong>30 Mo</strong>. Pour une analyse plus rapide et fiable, 
-              nous vous recommandons de <strong>diviser votre PDF en 2 ou 3 parties</strong> avant de le téléverser.
+              Votre fichier <strong>{largeFile?.name}</strong> fait <strong>{largeFile ? (largeFile.size / (1024*1024)).toFixed(1) : 0} Mo</strong>. 
+              Pour une analyse plus rapide et fiable, nous vous recommandons de le <strong>découper en plusieurs parties</strong>.
             </p>
+            
+            {/* Bouton de découpage automatique */}
+            <button 
+              className="btn btn-split" 
+              onClick={handleSplitPdf} 
+              disabled={isSplitting}
+            >
+              {isSplitting ? (
+                <>
+                  <span className="spinner-small"></span>
+                  Découpage en cours...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  ✂️ Découper et télécharger (ZIP)
+                </>
+              )}
+            </button>
+            <p className="split-info">
+              Le fichier sera découpé en parties de ~15 Mo. Vous pourrez ensuite les ré-uploader pour l'analyse.
+            </p>
+
+            <div className="separator-or">
+              <span>ou</span>
+            </div>
+            
             <p className="tip-text">
-              💡 <strong>Astuce :</strong> Vous pouvez ensuite utiliser le bouton "Ajouter d'autres fichiers" 
-              pour analyser toutes les parties ensemble.
+              💡 <strong>Découpage manuel :</strong> Utilisez un outil en ligne pour plus de contrôle.
             </p>
             <a 
               href="https://fr.wikihow.com/diviser-un-fichier-PDF-en-plusieurs-documents" 
@@ -1078,8 +1108,8 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
             >
               📖 Comment diviser un PDF ? (WikiHow)
             </a>
-            <button className="btn btn-primary" onClick={() => setShowLargeFileWarning(false)}>
-              J'ai compris, continuer
+            <button className="btn btn-secondary" onClick={() => { setShowLargeFileWarning(false); setLargeFile(null); }}>
+              Continuer sans découper
             </button>
           </div>
         </div>
