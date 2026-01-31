@@ -833,50 +833,50 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 extracted_pdfs = extract_pdfs_from_rar(tmp_path)
                 archive_type = "RAR"
             else:
-            archive_type = None
-        
-        if ext in ['.zip', '.rar']:
-            if not extracted_pdfs:
-                raise HTTPException(status_code=400, detail=f"Aucun fichier PDF trouvé dans le {archive_type}")
-            logger.info(f"{len(extracted_pdfs)} PDF(s) extraits du {archive_type}")
+                archive_type = None
             
-            # Analyser chaque PDF extrait
-            all_analyses = []
-            total_files = len(extracted_pdfs)
-            
-            for file_idx, pdf_path in enumerate(extracted_pdfs, 1):
-                pdf_name = os.path.basename(pdf_path)
-                pdf_size = os.path.getsize(pdf_path)
-                logger.info(f"Analyse du PDF {file_idx}/{total_files}: {pdf_name}")
+            if ext in ['.zip', '.rar']:
+                if not extracted_pdfs:
+                    raise HTTPException(status_code=400, detail=f"Aucun fichier PDF trouvé dans le {archive_type}")
+                logger.info(f"{len(extracted_pdfs)} PDF(s) extraits du {archive_type}")
                 
-                # Segmenter si nécessaire
-                if pdf_size > MAX_CHUNK_SIZE:
-                    pdf_chunks = split_pdf_into_chunks(pdf_path, MAX_CHUNK_SIZE)
-                else:
-                    pdf_chunks = [pdf_path]
+                # Analyser chaque PDF extrait
+                all_analyses = []
+                total_files = len(extracted_pdfs)
                 
-                chunk_paths.extend(pdf_chunks)
-                
-                # Analyser les segments de ce PDF
-                pdf_analyses = []
-                for seg_idx, chunk_path in enumerate(pdf_chunks, 1):
-                    analysis = await analyze_pdf_segment(chunk_path, seg_idx, len(pdf_chunks))
-                    # Filtrer les résultats None
-                    if analysis:
-                        pdf_analyses.append(analysis)
+                for file_idx, pdf_path in enumerate(extracted_pdfs, 1):
+                    pdf_name = os.path.basename(pdf_path)
+                    pdf_size = os.path.getsize(pdf_path)
+                    logger.info(f"Analyse du PDF {file_idx}/{total_files}: {pdf_name}")
+                    
+                    # Segmenter si nécessaire
+                    if pdf_size > MAX_CHUNK_SIZE:
+                        pdf_chunks = split_pdf_into_chunks(pdf_path, MAX_CHUNK_SIZE)
                     else:
-                        pdf_analyses.append(f"[Segment {seg_idx} - Analyse non disponible]")
+                        pdf_chunks = [pdf_path]
+                    
+                    chunk_paths.extend(pdf_chunks)
+                    
+                    # Analyser les segments de ce PDF
+                    pdf_analyses = []
+                    for seg_idx, chunk_path in enumerate(pdf_chunks, 1):
+                        analysis = await analyze_pdf_segment(chunk_path, seg_idx, len(pdf_chunks))
+                        # Filtrer les résultats None
+                        if analysis:
+                            pdf_analyses.append(analysis)
+                        else:
+                            pdf_analyses.append(f"[Segment {seg_idx} - Analyse non disponible]")
+                    
+                    if len(pdf_chunks) > 1:
+                        combined = f"## 📄 {pdf_name}\n\n" + "\n---\n".join(pdf_analyses)
+                    else:
+                        combined = f"## 📄 {pdf_name}\n\n{pdf_analyses[0] if pdf_analyses else '[Analyse non disponible]'}"
+                    
+                    all_analyses.append(combined)
                 
-                if len(pdf_chunks) > 1:
-                    combined = f"## 📄 {pdf_name}\n\n" + "\n---\n".join(pdf_analyses)
-                else:
-                    combined = f"## 📄 {pdf_name}\n\n{pdf_analyses[0] if pdf_analyses else '[Analyse non disponible]'}"
-                
-                all_analyses.append(combined)
-            
-            combined_analysis = f"# 📋 ANALYSE DE {total_files} DOCUMENT(S) ({archive_type})\n\n"
-            combined_analysis += "\n\n---\n\n".join(all_analyses)
-            total_segments = len(chunk_paths)
+                combined_analysis = f"# 📋 ANALYSE DE {total_files} DOCUMENT(S) ({archive_type})\n\n"
+                combined_analysis += "\n\n---\n\n".join(all_analyses)
+                total_segments = len(chunk_paths)
             
         else:
             # Traitement normal pour les autres fichiers
