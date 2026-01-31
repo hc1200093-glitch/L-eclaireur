@@ -906,15 +906,21 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                     else:
                         all_analyses.append(f"[Segment {i} - Analyse non disponible]")
                 
-                # Combiner les analyses
+                # Combiner les analyses avec protection contre None
                 if total_segments > 1:
                     combined_analysis = f"📄 **ANALYSE COMPLÈTE DU DOCUMENT** ({total_segments} segments)\n\n"
-                    combined_analysis += "---\n\n".join([
-                        f"### Segment {i+1}/{total_segments}\n\n{analysis}" 
-                        for i, analysis in enumerate(all_analyses)
-                    ])
+                    try:
+                        segments_text = []
+                        for i, analysis in enumerate(all_analyses):
+                            # S'assurer que chaque analyse est une chaîne
+                            analysis_str = str(analysis) if analysis is not None else "[Segment non disponible]"
+                            segments_text.append(f"### Segment {i+1}/{total_segments}\n\n{analysis_str}")
+                        combined_analysis += "---\n\n".join(segments_text)
+                    except Exception as join_error:
+                        logger.error(f"Erreur lors de la combinaison: {str(join_error)}")
+                        combined_analysis += "[Erreur lors de la combinaison des segments]"
                 else:
-                    combined_analysis = all_analyses[0] if all_analyses else "[Analyse non disponible]"
+                    combined_analysis = str(all_analyses[0]) if all_analyses and all_analyses[0] else "[Analyse non disponible]"
             
             # Anonymisation pour le rapport (légère)
             report_analysis = anonymize_for_report(combined_analysis)
