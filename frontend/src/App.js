@@ -717,14 +717,24 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [progress, setProgress] = useState(0);
   const [showLatencyPopup, setShowLatencyPopup] = useState(false);
   const [analysisId, setAnalysisId] = useState(null);
+  const [showLargeFileWarning, setShowLargeFileWarning] = useState(false);
   const progressIntervalRef = useRef(null);
   const latencyTimeoutRef = useRef(null);
 
   const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf'];
+  const LARGE_FILE_THRESHOLD = 30 * 1024 * 1024; // 30 Mo
 
   const isAcceptedFormat = (filename) => {
     const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
     return ACCEPTED_FORMATS.includes(ext);
+  };
+
+  // Vérifier si un fichier est trop gros et afficher l'avertissement
+  const checkLargeFile = (fileList) => {
+    const hasLargeFile = fileList.some(f => f.size > LARGE_FILE_THRESHOLD);
+    if (hasLargeFile) {
+      setShowLargeFileWarning(true);
+    }
   };
 
   const handleDrag = useCallback((e) => {
@@ -749,11 +759,13 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       }
       
       if (validFiles.length > 0) {
-        setFiles(prev => [...prev, ...validFiles].slice(0, 10)); // Max 10 fichiers
+        const newFiles = [...files, ...validFiles].slice(0, 10);
+        setFiles(newFiles);
         setResult(null);
+        checkLargeFile(validFiles);
       }
     }
-  }, []);
+  }, [files]);
 
   const handleFileSelect = (e) => {
     setError(null);
