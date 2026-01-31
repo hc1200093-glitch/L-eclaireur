@@ -921,46 +921,46 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
             
             # Extraire les médecins
             await extract_and_update_medecins(combined_analysis, file.filename)
-        
-        # DESTRUCTION SÉCURISÉE DOD 5220.22-M
-        destruction_success = True
-        for chunk_path in chunk_paths:
-            if os.path.exists(chunk_path):
-                destruction_success = destruction_securisee(chunk_path) and destruction_success
-        # Détruire les PDFs extraits du ZIP
-        for pdf_path in extracted_pdfs:
-            if os.path.exists(pdf_path):
-                destruction_success = destruction_securisee(pdf_path) and destruction_success
-        if tmp_path and os.path.exists(tmp_path) and tmp_path not in chunk_paths:
-            destruction_success = destruction_securisee(tmp_path) and destruction_success
-        
-        logger.info(f"Analyse terminée pour: {file.filename} - Destruction sécurisée: {destruction_success}")
-        
-        # NE PAS sauvegarder en base (aucune copie gardée)
-        
-        return AnalysisResponse(
-            success=True,
-            filename=file.filename,
-            file_size=file_size,
-            analysis=report_analysis,
-            anonymized_for_ai=ai_analysis,
-            message=f"Analyse terminée ({total_segments} segment{'s' if total_segments > 1 else ''}). Document détruit de manière sécurisée.",
-            segments_analyzed=total_segments,
-            destruction_confirmed=destruction_success
-        )
-        
-    except Exception as e:
-        logger.error(f"Erreur lors de l'analyse: {str(e)}")
-        # Destruction sécurisée en cas d'erreur
-        for chunk_path in chunk_paths:
-            if os.path.exists(chunk_path):
-                destruction_securisee(chunk_path)
-        for pdf_path in extracted_pdfs:
-            if os.path.exists(pdf_path):
-                destruction_securisee(pdf_path)
-        if tmp_path and os.path.exists(tmp_path):
-            destruction_securisee(tmp_path)
-        raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
+            
+            # DESTRUCTION SÉCURISÉE DOD 5220.22-M
+            destruction_success = True
+            for chunk_path in chunk_paths:
+                if os.path.exists(chunk_path):
+                    destruction_success = destruction_securisee(chunk_path) and destruction_success
+            # Détruire les PDFs extraits du ZIP
+            for pdf_path in extracted_pdfs:
+                if os.path.exists(pdf_path):
+                    destruction_success = destruction_securisee(pdf_path) and destruction_success
+            if tmp_path and os.path.exists(tmp_path) and tmp_path not in chunk_paths:
+                destruction_success = destruction_securisee(tmp_path) and destruction_success
+            
+            logger.info(f"Analyse terminée pour: {file.filename} - Destruction sécurisée: {destruction_success}")
+            
+            # NE PAS sauvegarder en base (aucune copie gardée)
+            
+            return AnalysisResponse(
+                success=True,
+                filename=file.filename,
+                file_size=file_size,
+                analysis=report_analysis,
+                anonymized_for_ai=ai_analysis,
+                message=f"Analyse terminée ({total_segments} segment{'s' if total_segments > 1 else ''}). Document détruit de manière sécurisée.",
+                segments_analyzed=total_segments,
+                destruction_confirmed=destruction_success
+            )
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'analyse: {str(e)}")
+            # Destruction sécurisée en cas d'erreur
+            for chunk_path in chunk_paths:
+                if os.path.exists(chunk_path):
+                    destruction_securisee(chunk_path)
+            for pdf_path in extracted_pdfs:
+                if os.path.exists(pdf_path):
+                    destruction_securisee(pdf_path)
+            if tmp_path and os.path.exists(tmp_path):
+                destruction_securisee(tmp_path)
+            raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
 
 # ===== COMPTEUR VISITEURS =====
 @api_router.get("/stats/visitors")
