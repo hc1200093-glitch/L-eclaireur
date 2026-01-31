@@ -851,7 +851,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 
                 all_analyses.append(combined)
             
-            combined_analysis = f"# 📋 ANALYSE DE {total_files} DOCUMENT(S) (ZIP)\n\n"
+            combined_analysis = f"# 📋 ANALYSE DE {total_files} DOCUMENT(S) ({archive_type})\n\n"
             combined_analysis += "\n\n---\n\n".join(all_analyses)
             total_segments = len(chunk_paths)
             
