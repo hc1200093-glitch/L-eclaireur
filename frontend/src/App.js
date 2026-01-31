@@ -1141,7 +1141,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
                 <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.tiff,.tif,.bmp,.txt,.rtf,.zip,.rar" onChange={handleFileSelect} hidden multiple data-testid="file-input"/>
                 Sélectionner des fichiers
               </label>
-              <p className="upload-hint">Formats acceptés: PDF, Word, Images (JPG, PNG, TIFF), TXT, RTF, ZIP</p>
+              <p className="upload-hint">Formats acceptés: PDF, Word, Images (JPG, PNG, TIFF), TXT, RTF, ZIP, RAR</p>
               <p className="upload-hint">Maximum 10 fichiers, 100 Mo chacun</p>
             </div>
           ) : (
