@@ -31,9 +31,9 @@ db = client[os.environ.get('DB_NAME')]
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
 # Limite de taille pour Gemini (serveurs limités à 20 Mo)
-# Réduction à 5 Mo pour fluidité et éviter les timeouts sur gros fichiers
-MAX_CHUNK_SIZE = 5 * 1024 * 1024  # 5 Mo pour fluidité optimale
-MAX_PAGES_PER_CHUNK = 8  # Maximum 8 pages par segment pour éviter timeouts
+# Optimisé à 7 Mo pour équilibre entre fluidité et nombre de segments
+MAX_CHUNK_SIZE = 7 * 1024 * 1024  # 7 Mo pour équilibre optimal
+MAX_PAGES_PER_CHUNK = 12  # Maximum 12 pages par segment pour éviter timeouts
 
 # Répertoire pour les fichiers temporaires
 UPLOAD_DIR = tempfile.gettempdir()
