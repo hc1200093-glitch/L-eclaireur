@@ -779,8 +779,10 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       }
       
       if (validFiles.length > 0) {
-        setFiles(prev => [...prev, ...validFiles].slice(0, 10));
+        const newFiles = [...files, ...validFiles].slice(0, 10);
+        setFiles(newFiles);
         setResult(null);
+        checkLargeFile(validFiles);
       }
     }
   };
