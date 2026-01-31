@@ -1038,8 +1038,33 @@ async def get_temporary_report(report_id: str):
         "filename": report.get("filename"),
         "analysis": report.get("analysis"),
         "segments": report.get("segments"),
+        "total_segments": report.get("total_segments"),
+        "status": report.get("status", "inconnu"),
         "created_at": report.get("created_at"),
         "message": "Rapport récupéré avec succès"
+    }
+
+@api_router.get("/reports/latest")
+async def get_latest_report():
+    """Récupère le dernier rapport en cours ou terminé (pour récupération en cas d'erreur)."""
+    report = await db.temp_reports.find_one(
+        {"expires_at": {"$gt": datetime.now(timezone.utc).timestamp()}},
+        sort=[("created_at", -1)]
+    )
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Aucun rapport récent trouvé")
+    
+    return {
+        "success": True,
+        "report_id": report.get("report_id"),
+        "filename": report.get("filename"),
+        "analysis": report.get("analysis"),
+        "segments": report.get("segments"),
+        "total_segments": report.get("total_segments"),
+        "status": report.get("status", "inconnu"),
+        "created_at": report.get("created_at"),
+        "message": f"Rapport {'en cours' if report.get('status') == 'en_cours' else 'terminé'} - {report.get('segments')}/{report.get('total_segments')} segments"
     }
 
 # ===== COMPTEUR VISITEURS =====
