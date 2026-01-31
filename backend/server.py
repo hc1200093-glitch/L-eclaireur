@@ -865,6 +865,10 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
         for chunk_path in chunk_paths:
             if os.path.exists(chunk_path):
                 destruction_success = destruction_securisee(chunk_path) and destruction_success
+        # Détruire les PDFs extraits du ZIP
+        for pdf_path in extracted_pdfs:
+            if os.path.exists(pdf_path):
+                destruction_success = destruction_securisee(pdf_path) and destruction_success
         if tmp_path and os.path.exists(tmp_path) and tmp_path not in chunk_paths:
             destruction_success = destruction_securisee(tmp_path) and destruction_success
         
@@ -889,6 +893,9 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
         for chunk_path in chunk_paths:
             if os.path.exists(chunk_path):
                 destruction_securisee(chunk_path)
+        for pdf_path in extracted_pdfs:
+            if os.path.exists(pdf_path):
+                destruction_securisee(pdf_path)
         if tmp_path and os.path.exists(tmp_path):
             destruction_securisee(tmp_path)
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
