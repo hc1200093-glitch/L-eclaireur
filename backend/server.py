@@ -804,13 +804,22 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
             tmp_file.write(contents)
             tmp_path = tmp_file.name
         
-        # Si c'est un ZIP, extraire les PDFs
+        # Si c'est un ZIP ou RAR, extraire les PDFs
         if ext == '.zip':
             logger.info("Fichier ZIP détecté, extraction des PDFs...")
             extracted_pdfs = extract_pdfs_from_zip(tmp_path)
+            archive_type = "ZIP"
+        elif ext == '.rar':
+            logger.info("Fichier RAR détecté, extraction des PDFs...")
+            extracted_pdfs = extract_pdfs_from_rar(tmp_path)
+            archive_type = "RAR"
+        else:
+            archive_type = None
+        
+        if ext in ['.zip', '.rar']:
             if not extracted_pdfs:
-                raise HTTPException(status_code=400, detail="Aucun fichier PDF trouvé dans le ZIP")
-            logger.info(f"{len(extracted_pdfs)} PDF(s) extraits du ZIP")
+                raise HTTPException(status_code=400, detail=f"Aucun fichier PDF trouvé dans le {archive_type}")
+            logger.info(f"{len(extracted_pdfs)} PDF(s) extraits du {archive_type}")
             
             # Analyser chaque PDF extrait
             all_analyses = []
