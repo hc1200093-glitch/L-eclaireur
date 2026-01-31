@@ -1006,6 +1006,42 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
     <div className="app-container">
       {showDestructionPopup && <DestructionPopup onClose={() => setShowDestructionPopup(false)} />}
       
+      {/* Popup d'avertissement pour les gros fichiers */}
+      {showLargeFileWarning && (
+        <div className="large-file-warning-overlay">
+          <div className="large-file-warning-popup">
+            <button className="close-popup-btn" onClick={() => setShowLargeFileWarning(false)} title="Fermer">×</button>
+            <div className="warning-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <h3>Fichier volumineux détecté</h3>
+            <p>
+              Votre fichier dépasse <strong>30 Mo</strong>. Pour une analyse plus rapide et fiable, 
+              nous vous recommandons de <strong>diviser votre PDF en 2 ou 3 parties</strong> avant de le téléverser.
+            </p>
+            <p className="tip-text">
+              💡 <strong>Astuce :</strong> Vous pouvez ensuite utiliser le bouton "Ajouter d'autres fichiers" 
+              pour analyser toutes les parties ensemble.
+            </p>
+            <a 
+              href="https://fr.wikihow.com/diviser-un-fichier-PDF-en-plusieurs-documents" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="wikihow-link"
+            >
+              📖 Comment diviser un PDF ? (WikiHow)
+            </a>
+            <button className="btn btn-primary" onClick={() => setShowLargeFileWarning(false)}>
+              J'ai compris, continuer
+            </button>
+          </div>
+        </div>
+      )}
+      
       <header className="header">
         <div className="header-left">
           <div className="logo">
