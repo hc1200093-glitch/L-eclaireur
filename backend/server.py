@@ -84,6 +84,24 @@ class AnalysisResponse(BaseModel):
     destruction_confirmed: bool = True
     report_id: Optional[str] = None  # ID pour récupérer le rapport pendant 15 min
 
+# Modèle pour l'analyse asynchrone
+class AsyncAnalysisResponse(BaseModel):
+    success: bool
+    job_id: str
+    message: str
+    status_url: str
+
+class AnalysisStatusResponse(BaseModel):
+    job_id: str
+    status: str  # "pending", "in_progress", "completed", "failed"
+    progress: int  # pourcentage 0-100
+    current_segment: int
+    total_segments: int
+    filename: str
+    analysis: Optional[str] = None
+    message: str
+    report_id: Optional[str] = None
+
 # Modèles pour les fiches médecins
 class MedecinCreate(BaseModel):
     nom: str = Field(..., min_length=2, max_length=100)
