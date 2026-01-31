@@ -786,6 +786,14 @@ def extract_pdfs_from_rar(rar_path: str) -> List[str]:
 @api_router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
     """Analyse un document et retourne un rapport de défense."""
+    global current_analysis_id
+    
+    # Vérifier si une analyse est déjà en cours
+    if analysis_lock.locked():
+        raise HTTPException(
+            status_code=429, 
+            detail="Une analyse est déjà en cours. Veuillez attendre qu'elle se termine avant d'en lancer une nouvelle."
+        )
     
     if not is_accepted_format(file.filename):
         accepted = ", ".join(ACCEPTED_FORMATS.keys())
@@ -798,15 +806,19 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
     if file_size > max_size:
         raise HTTPException(status_code=400, detail="Le fichier dépasse la limite de 100 Mo")
     
-    logger.info(f"Analyse du fichier: {file.filename} ({file_size / (1024*1024):.2f} Mo)")
-    
-    chunk_paths = []
-    tmp_path = None
-    extracted_pdfs = []
-    
-    try:
-        # Sauvegarder temporairement
-        ext = get_file_extension(file.filename)
+    # Acquérir le verrou pour empêcher les analyses parallèles
+    async with analysis_lock:
+        this_analysis_id = str(uuid.uuid4())
+        current_analysis_id = this_analysis_id
+        logger.info(f"Début analyse {this_analysis_id}: {file.filename} ({file_size / (1024*1024):.2f} Mo)")
+        
+        chunk_paths = []
+        tmp_path = None
+        extracted_pdfs = []
+        
+        try:
+            # Sauvegarder temporairement
+            ext = get_file_extension(file.filename)
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
             tmp_file.write(contents)
             tmp_path = tmp_file.name
