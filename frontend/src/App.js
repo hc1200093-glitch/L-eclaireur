@@ -723,7 +723,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const progressIntervalRef = useRef(null);
   const latencyTimeoutRef = useRef(null);
 
-  const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf'];
+  const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf', '.zip'];
   const LARGE_FILE_THRESHOLD = 30 * 1024 * 1024; // 30 Mo
 
   const isAcceptedFormat = (filename) => {
