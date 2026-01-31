@@ -941,7 +941,18 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
             
             logger.info(f"Analyse terminée pour: {file.filename} - Destruction sécurisée: {destruction_success}")
             
-            # NE PAS sauvegarder en base (aucune copie gardée)
+            # Sauvegarder temporairement le rapport (15 minutes) pour permettre récupération
+            report_id = str(uuid.uuid4())
+            expiration = datetime.now(timezone.utc).timestamp() + 900  # 15 minutes
+            await db.temp_reports.insert_one({
+                "report_id": report_id,
+                "filename": file.filename,
+                "analysis": report_analysis,
+                "created_at": datetime.now(timezone.utc),
+                "expires_at": expiration,
+                "segments": total_segments
+            })
+            logger.info(f"Rapport sauvegardé temporairement: {report_id}")
             
             return AnalysisResponse(
                 success=True,
@@ -949,7 +960,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 file_size=file_size,
                 analysis=report_analysis,
                 anonymized_for_ai=ai_analysis,
-                message=f"Analyse terminée ({total_segments} segment{'s' if total_segments > 1 else ''}). Document détruit de manière sécurisée.",
+                message=f"Analyse terminée ({total_segments} segment{'s' if total_segments > 1 else ''}). Document détruit de manière sécurisée. Lien de récupération valide 15 min: /api/report/{report_id}",
                 segments_analyzed=total_segments,
                 destruction_confirmed=destruction_success
             )
@@ -966,6 +977,29 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
             if tmp_path and os.path.exists(tmp_path):
                 destruction_securisee(tmp_path)
             raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
+
+# ===== RÉCUPÉRATION RAPPORT TEMPORAIRE =====
+@api_router.get("/report/{report_id}")
+async def get_temporary_report(report_id: str):
+    """Récupère un rapport temporaire par son ID (valide 15 minutes)."""
+    report = await db.temp_reports.find_one({"report_id": report_id})
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Rapport non trouvé ou expiré")
+    
+    # Vérifier expiration
+    if datetime.now(timezone.utc).timestamp() > report.get("expires_at", 0):
+        await db.temp_reports.delete_one({"report_id": report_id})
+        raise HTTPException(status_code=410, detail="Ce rapport a expiré (validité 15 minutes)")
+    
+    return {
+        "success": True,
+        "filename": report.get("filename"),
+        "analysis": report.get("analysis"),
+        "segments": report.get("segments"),
+        "created_at": report.get("created_at"),
+        "message": "Rapport récupéré avec succès"
+    }
 
 # ===== COMPTEUR VISITEURS =====
 @api_router.get("/stats/visitors")
