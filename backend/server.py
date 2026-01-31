@@ -812,21 +812,235 @@ def extract_pdfs_from_rar(rar_path: str) -> List[str]:
                 destruction_securisee(path)
         return []
 
-@api_router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
-    """Analyse un document et retourne un rapport de défense."""
-    global current_analysis_id
+# ===== ANALYSE ASYNCHRONE =====
+async def run_analysis_background(job_id: str, file_path: str, filename: str, file_size: int, ext: str, consent_ai_learning: bool):
+    """Exécute l'analyse en arrière-plan et met à jour le statut dans la base de données."""
+    chunk_paths = []
+    extracted_pdfs = []
     
-    # Vérifier si une analyse est déjà en cours
-    if analysis_lock.locked():
-        raise HTTPException(
-            status_code=429, 
-            detail="Une analyse est déjà en cours. Veuillez attendre qu'elle se termine avant d'en lancer une nouvelle."
+    try:
+        # Mettre à jour le statut
+        await db.analysis_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {"status": "in_progress", "message": "Analyse démarrée..."}}
         )
+        
+        # Si c'est un ZIP ou RAR, extraire les PDFs
+        if ext == '.zip':
+            logger.info(f"[{job_id}] Fichier ZIP détecté, extraction des PDFs...")
+            extracted_pdfs = extract_pdfs_from_zip(file_path)
+            archive_type = "ZIP"
+        elif ext == '.rar':
+            logger.info(f"[{job_id}] Fichier RAR détecté, extraction des PDFs...")
+            extracted_pdfs = extract_pdfs_from_rar(file_path)
+            archive_type = "RAR"
+        else:
+            archive_type = None
+        
+        if ext in ['.zip', '.rar']:
+            if not extracted_pdfs:
+                await db.analysis_jobs.update_one(
+                    {"job_id": job_id},
+                    {"$set": {"status": "failed", "message": f"Aucun fichier PDF trouvé dans le {archive_type}"}}
+                )
+                return
+            
+            # Pour simplifier, on traite tous les PDFs extraits comme un seul document
+            all_chunk_paths = []
+            for pdf_path in extracted_pdfs:
+                if os.path.getsize(pdf_path) > MAX_CHUNK_SIZE:
+                    all_chunk_paths.extend(split_pdf_into_chunks(pdf_path, MAX_CHUNK_SIZE))
+                else:
+                    all_chunk_paths.append(pdf_path)
+            chunk_paths = all_chunk_paths
+        else:
+            # Segmenter si PDF volumineux
+            if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
+                logger.info(f"[{job_id}] Fichier volumineux, segmentation en cours...")
+                chunk_paths = split_pdf_into_chunks(file_path, MAX_CHUNK_SIZE)
+            else:
+                chunk_paths = [file_path]
+        
+        total_segments = len(chunk_paths)
+        await db.analysis_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {"total_segments": total_segments, "message": f"Analyse de {total_segments} segments..."}}
+        )
+        
+        # Analyser chaque segment
+        all_analyses = []
+        for i, chunk_path in enumerate(chunk_paths, 1):
+            logger.info(f"[{job_id}] Analyse du segment {i}/{total_segments}...")
+            
+            # Mettre à jour la progression
+            progress = int((i - 1) / total_segments * 100)
+            await db.analysis_jobs.update_one(
+                {"job_id": job_id},
+                {"$set": {
+                    "current_segment": i,
+                    "progress": progress,
+                    "message": f"Analyse du segment {i}/{total_segments}..."
+                }}
+            )
+            
+            segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
+            if segment_analysis:
+                all_analyses.append(segment_analysis)
+            else:
+                all_analyses.append(f"[Segment {i} - Analyse non disponible]")
+            
+            # Sauvegarder le rapport partiel après chaque segment
+            partial_analysis = f"📄 **ANALYSE EN COURS** ({i}/{total_segments} segments complétés)\n\n"
+            partial_analysis += "---\n\n".join([
+                f"### Segment {j+1}/{total_segments}\n\n{str(a) if a else '[Non disponible]'}" 
+                for j, a in enumerate(all_analyses)
+            ])
+            
+            await db.analysis_jobs.update_one(
+                {"job_id": job_id},
+                {"$set": {
+                    "partial_analysis": anonymize_for_report(partial_analysis),
+                    "progress": int(i / total_segments * 100)
+                }}
+            )
+        
+        # Combiner les analyses finales
+        if total_segments > 1:
+            combined_analysis = f"📄 **ANALYSE COMPLÈTE DU DOCUMENT** ({total_segments} segments)\n\n"
+            segments_text = []
+            for i, analysis in enumerate(all_analyses):
+                analysis_str = str(analysis) if analysis is not None else "[Segment non disponible]"
+                segments_text.append(f"### Segment {i+1}/{total_segments}\n\n{analysis_str}")
+            combined_analysis += "---\n\n".join(segments_text)
+        else:
+            combined_analysis = str(all_analyses[0]) if all_analyses and all_analyses[0] else "[Analyse non disponible]"
+        
+        # Anonymisation
+        report_analysis = anonymize_for_report(combined_analysis)
+        
+        # Sauvegarder le rapport final
+        report_id = str(uuid.uuid4())
+        expiration = datetime.now(timezone.utc).timestamp() + 900  # 15 minutes
+        await db.temp_reports.insert_one({
+            "report_id": report_id,
+            "filename": filename,
+            "analysis": report_analysis,
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": expiration,
+            "segments": total_segments,
+            "status": "termine"
+        })
+        
+        # Mettre à jour le job comme terminé
+        await db.analysis_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {
+                "status": "completed",
+                "progress": 100,
+                "current_segment": total_segments,
+                "analysis": report_analysis,
+                "report_id": report_id,
+                "message": f"Analyse terminée ({total_segments} segments). Rapport disponible 15 minutes.",
+                "completed_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        logger.info(f"[{job_id}] Analyse terminée avec succès. Report ID: {report_id}")
+        
+    except Exception as e:
+        logger.error(f"[{job_id}] Erreur lors de l'analyse: {str(e)}")
+        await db.analysis_jobs.update_one(
+            {"job_id": job_id},
+            {"$set": {
+                "status": "failed",
+                "message": f"Erreur: {str(e)[:200]}"
+            }}
+        )
+    finally:
+        # Destruction sécurisée
+        for chunk_path in chunk_paths:
+            if os.path.exists(chunk_path):
+                destruction_securisee(chunk_path)
+        for pdf_path in extracted_pdfs:
+            if os.path.exists(pdf_path):
+                destruction_securisee(pdf_path)
+        if os.path.exists(file_path):
+            destruction_securisee(file_path)
+
+@api_router.post("/analyze-async", response_model=AsyncAnalysisResponse)
+async def analyze_document_async(file: UploadFile = File(...), consent_ai_learning: bool = False):
+    """Lance une analyse en arrière-plan et retourne immédiatement un ID de job."""
     
     if not is_accepted_format(file.filename):
         accepted = ", ".join(ACCEPTED_FORMATS.keys())
         raise HTTPException(status_code=400, detail=f"Format non accepté. Formats acceptés: {accepted}")
+    
+    contents = await file.read()
+    file_size = len(contents)
+    max_size = 100 * 1024 * 1024  # 100 Mo
+    
+    if file_size > max_size:
+        raise HTTPException(status_code=400, detail="Le fichier dépasse la limite de 100 Mo")
+    
+    # Créer un ID de job unique
+    job_id = str(uuid.uuid4())
+    
+    # Sauvegarder le fichier temporairement
+    ext = get_file_extension(file.filename)
+    tmp_path = os.path.join(tempfile.gettempdir(), f"analysis_{job_id}{ext}")
+    with open(tmp_path, 'wb') as f:
+        f.write(contents)
+    
+    # Créer l'entrée du job dans la base de données
+    await db.analysis_jobs.insert_one({
+        "job_id": job_id,
+        "filename": file.filename,
+        "file_size": file_size,
+        "status": "pending",
+        "progress": 0,
+        "current_segment": 0,
+        "total_segments": 0,
+        "message": "Analyse en attente...",
+        "created_at": datetime.now(timezone.utc),
+        "consent_ai_learning": consent_ai_learning
+    })
+    
+    # Lancer l'analyse en arrière-plan
+    asyncio.create_task(run_analysis_background(job_id, tmp_path, file.filename, file_size, ext, consent_ai_learning))
+    
+    logger.info(f"Analyse asynchrone lancée: {job_id} pour {file.filename}")
+    
+    return AsyncAnalysisResponse(
+        success=True,
+        job_id=job_id,
+        message="Analyse lancée en arrière-plan. Utilisez le lien de statut pour suivre la progression.",
+        status_url=f"/api/analyze-status/{job_id}"
+    )
+
+@api_router.get("/analyze-status/{job_id}", response_model=AnalysisStatusResponse)
+async def get_analysis_status(job_id: str):
+    """Récupère le statut d'une analyse en cours."""
+    job = await db.analysis_jobs.find_one({"job_id": job_id})
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job d'analyse non trouvé")
+    
+    return AnalysisStatusResponse(
+        job_id=job_id,
+        status=job.get("status", "unknown"),
+        progress=job.get("progress", 0),
+        current_segment=job.get("current_segment", 0),
+        total_segments=job.get("total_segments", 0),
+        filename=job.get("filename", ""),
+        analysis=job.get("analysis") if job.get("status") == "completed" else job.get("partial_analysis"),
+        message=job.get("message", ""),
+        report_id=job.get("report_id")
+    )
+
+# ===== ANCIEN ENDPOINT (gardé pour compatibilité) =====
+@api_router.post("/analyze", response_model=AnalysisResponse)
+async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
+    """Analyse un document et retourne un rapport de défense."""
     
     contents = await file.read()
     file_size = len(contents)
