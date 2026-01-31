@@ -628,10 +628,12 @@ async def analyze_multiple_documents(files: List[UploadFile] = File(...), consen
             all_analyses.append(f"## 📄 Document {idx}: {file.filename}\n\n{analysis}")
             files_analyzed.append(file.filename)
         
-        # Combiner toutes les analyses
+        # Combiner toutes les analyses avec protection contre None
         combined = "# 📋 RAPPORT D'ANALYSE COMBINÉ - L'ÉCLAIREUR\n\n"
         combined += f"**{len(files_analyzed)} document(s) analysé(s)**\n\n"
-        combined += "---\n\n".join(all_analyses)
+        # S'assurer que tous les éléments sont des chaînes
+        safe_analyses = [str(a) if a is not None else "[Analyse non disponible]" for a in all_analyses]
+        combined += "---\n\n".join(safe_analyses)
         
         # Anonymisation
         report_analysis = anonymize_for_report(combined)
