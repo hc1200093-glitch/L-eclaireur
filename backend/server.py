@@ -961,9 +961,10 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 file_size=file_size,
                 analysis=report_analysis,
                 anonymized_for_ai=ai_analysis,
-                message=f"Analyse terminée ({total_segments} segment{'s' if total_segments > 1 else ''}). Document détruit de manière sécurisée. Lien de récupération valide 15 min: /api/report/{report_id}",
+                message=f"Analyse terminée ({total_segments} segment{'s' if total_segments > 1 else ''}). Rapport disponible 15 minutes.",
                 segments_analyzed=total_segments,
-                destruction_confirmed=destruction_success
+                destruction_confirmed=destruction_success,
+                report_id=report_id
             )
             
         except Exception as e:
