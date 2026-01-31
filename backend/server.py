@@ -79,6 +79,7 @@ class AnalysisResponse(BaseModel):
     message: str
     segments_analyzed: int = 1
     destruction_confirmed: bool = True
+    report_id: Optional[str] = None  # ID pour récupérer le rapport pendant 15 min
 
 # Modèles pour les fiches médecins
 class MedecinCreate(BaseModel):
