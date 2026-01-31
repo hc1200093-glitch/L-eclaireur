@@ -48,10 +48,13 @@ app = FastAPI(title="L'Éclaireur API", description="Outil d'aide pour les trava
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Système anti-analyses parallèles
+# Système d'analyse asynchrone
 import asyncio
-analysis_lock = asyncio.Lock()
-current_analysis_id = None
+from concurrent.futures import ThreadPoolExecutor
+
+# Dictionnaire pour stocker les tâches d'analyse en cours
+active_analyses = {}
+analysis_executor = ThreadPoolExecutor(max_workers=2)
 
 # Configure logging
 logging.basicConfig(
