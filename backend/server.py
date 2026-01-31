@@ -621,6 +621,9 @@ async def analyze_multiple_documents(files: List[UploadFile] = File(...), consen
             # Analyser le document
             mime_type = ACCEPTED_FORMATS.get(ext, 'application/octet-stream')
             analysis = await analyze_single_file(tmp_path, mime_type, file.filename, idx, len(files))
+            # S'assurer que analysis n'est jamais None
+            if analysis is None:
+                analysis = "[Analyse non disponible pour ce document]"
             all_analyses.append(f"## 📄 Document {idx}: {file.filename}\n\n{analysis}")
             files_analyzed.append(file.filename)
         
