@@ -436,7 +436,7 @@ Le travailleur compte sur toi pour l'aider à comprendre son dossier et se défe
             )
             
             response = await chat.send_message(user_message)
-            return response
+            return response if response else f"[Segment {segment_num} - Réponse vide]"
             
         except Exception as e:
             error_str = str(e)
@@ -447,9 +447,11 @@ Le travailleur compte sur toi pour l'aider à comprendre son dossier et se défe
                     logger.warning(f"Erreur temporaire segment {segment_num}, retry {attempt+2}/{max_retries} dans {wait_time}s...")
                     await asyncio.sleep(wait_time)
                     continue
-            raise e
+            # Au lieu de lever une exception, retourner un message d'erreur
+            return f"[Segment {segment_num} - Erreur lors de l'analyse: serveurs temporairement indisponibles. Ce segment pourra être réanalysé ultérieurement.]"
     
-    raise Exception(f"Échec après {max_retries} tentatives pour le segment {segment_num}")
+    # Si toutes les tentatives échouent, retourner un message au lieu de lever une exception
+    return f"[Segment {segment_num} - Échec après {max_retries} tentatives. Les serveurs sont très sollicités.]"
 
 async def extract_and_update_medecins(analysis_text: str, source_filename: str):
     """Extrait automatiquement les médecins de l'analyse et met à jour la base de données."""
