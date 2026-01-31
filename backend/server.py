@@ -875,7 +875,11 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
             for i, chunk_path in enumerate(chunk_paths, 1):
                 logger.info(f"Analyse du segment {i}/{total_segments}...")
                 segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
-                all_analyses.append(segment_analysis)
+                # Filtrer les résultats None
+                if segment_analysis:
+                    all_analyses.append(segment_analysis)
+                else:
+                    all_analyses.append(f"[Segment {i} - Analyse non disponible]")
             
             # Combiner les analyses
             if total_segments > 1:
@@ -885,7 +889,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                     for i, analysis in enumerate(all_analyses)
                 ])
             else:
-                combined_analysis = all_analyses[0]
+                combined_analysis = all_analyses[0] if all_analyses else "[Analyse non disponible]"
         
         # Anonymisation pour le rapport (légère)
         report_analysis = anonymize_for_report(combined_analysis)
