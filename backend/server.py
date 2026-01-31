@@ -769,6 +769,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
     
     chunk_paths = []
     tmp_path = None
+    extracted_pdfs = []
     
     try:
         # Sauvegarder temporairement
@@ -777,31 +778,75 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
             tmp_file.write(contents)
             tmp_path = tmp_file.name
         
-        # Segmenter si PDF volumineux
-        if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
-            logger.info(f"Fichier volumineux, segmentation en cours...")
-            chunk_paths = split_pdf_into_chunks(tmp_path, MAX_CHUNK_SIZE)
+        # Si c'est un ZIP, extraire les PDFs
+        if ext == '.zip':
+            logger.info("Fichier ZIP détecté, extraction des PDFs...")
+            extracted_pdfs = extract_pdfs_from_zip(tmp_path)
+            if not extracted_pdfs:
+                raise HTTPException(status_code=400, detail="Aucun fichier PDF trouvé dans le ZIP")
+            logger.info(f"{len(extracted_pdfs)} PDF(s) extraits du ZIP")
+            
+            # Analyser chaque PDF extrait
+            all_analyses = []
+            total_files = len(extracted_pdfs)
+            
+            for file_idx, pdf_path in enumerate(extracted_pdfs, 1):
+                pdf_name = os.path.basename(pdf_path)
+                pdf_size = os.path.getsize(pdf_path)
+                logger.info(f"Analyse du PDF {file_idx}/{total_files}: {pdf_name}")
+                
+                # Segmenter si nécessaire
+                if pdf_size > MAX_CHUNK_SIZE:
+                    pdf_chunks = split_pdf_into_chunks(pdf_path, MAX_CHUNK_SIZE)
+                else:
+                    pdf_chunks = [pdf_path]
+                
+                chunk_paths.extend(pdf_chunks)
+                
+                # Analyser les segments de ce PDF
+                pdf_analyses = []
+                for seg_idx, chunk_path in enumerate(pdf_chunks, 1):
+                    analysis = await analyze_pdf_segment(chunk_path, seg_idx, len(pdf_chunks))
+                    pdf_analyses.append(analysis)
+                
+                if len(pdf_chunks) > 1:
+                    combined = f"## 📄 {pdf_name}\n\n" + "\n---\n".join(pdf_analyses)
+                else:
+                    combined = f"## 📄 {pdf_name}\n\n{pdf_analyses[0]}"
+                
+                all_analyses.append(combined)
+            
+            combined_analysis = f"# 📋 ANALYSE DE {total_files} DOCUMENT(S) (ZIP)\n\n"
+            combined_analysis += "\n\n---\n\n".join(all_analyses)
+            total_segments = len(chunk_paths)
+            
         else:
-            chunk_paths = [tmp_path]
-        
-        # Analyser chaque segment
-        all_analyses = []
-        total_segments = len(chunk_paths)
-        
-        for i, chunk_path in enumerate(chunk_paths, 1):
-            logger.info(f"Analyse du segment {i}/{total_segments}...")
-            segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
-            all_analyses.append(segment_analysis)
-        
-        # Combiner les analyses
-        if total_segments > 1:
-            combined_analysis = f"📄 **ANALYSE COMPLÈTE DU DOCUMENT** ({total_segments} segments)\n\n"
-            combined_analysis += "---\n\n".join([
-                f"### Segment {i+1}/{total_segments}\n\n{analysis}" 
-                for i, analysis in enumerate(all_analyses)
-            ])
-        else:
-            combined_analysis = all_analyses[0]
+            # Traitement normal pour les autres fichiers
+            # Segmenter si PDF volumineux
+            if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
+                logger.info(f"Fichier volumineux, segmentation en cours...")
+                chunk_paths = split_pdf_into_chunks(tmp_path, MAX_CHUNK_SIZE)
+            else:
+                chunk_paths = [tmp_path]
+            
+            # Analyser chaque segment
+            all_analyses = []
+            total_segments = len(chunk_paths)
+            
+            for i, chunk_path in enumerate(chunk_paths, 1):
+                logger.info(f"Analyse du segment {i}/{total_segments}...")
+                segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
+                all_analyses.append(segment_analysis)
+            
+            # Combiner les analyses
+            if total_segments > 1:
+                combined_analysis = f"📄 **ANALYSE COMPLÈTE DU DOCUMENT** ({total_segments} segments)\n\n"
+                combined_analysis += "---\n\n".join([
+                    f"### Segment {i+1}/{total_segments}\n\n{analysis}" 
+                    for i, analysis in enumerate(all_analyses)
+                ])
+            else:
+                combined_analysis = all_analyses[0]
         
         # Anonymisation pour le rapport (légère)
         report_analysis = anonymize_for_report(combined_analysis)
