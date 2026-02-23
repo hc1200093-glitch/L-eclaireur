@@ -279,11 +279,13 @@ class LEclaireurAPITester:
         self.test_root_endpoint()
         self.test_visitor_stats()
         
-        # Content management tests
+        # Content management tests  
         self.test_testimonials()
         self.test_medecins_endpoints()
         self.test_contributions()
-        self.test_medecins_stats()
+        
+        # Reports test
+        self.test_reports_latest()
         
         # Analysis endpoint structure test
         self.test_analyze_endpoint_structure()
