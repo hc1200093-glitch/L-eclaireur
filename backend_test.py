@@ -166,37 +166,49 @@ class LEclaireurAPITester:
         return False
     
     def test_contributions(self):
-        """Test contributions endpoint"""
+        """Test contributions endpoint with moderation"""
         try:
-            # Get contributions
-            response = requests.get(f"{self.api_url}/contributions", timeout=10)
-            if response.status_code == 200:
-                contributions = response.json()
-                
-                # Test creating a contribution
-                test_contribution = {
+            # Test creating a contribution with appropriate Quebec worker data
+            test_contribution = {
+                "medecin_nom": "TREMBLAY",
+                "medecin_prenom": "Jean",
+                "type_contribution": "pro_employe",
+                "description": "Ce médecin a rendu une décision favorable dans mon dossier CNESST 12345. Rapport détaillé et objectif qui a aidé ma cause au TAT.",
+                "source_reference": "Dossier TAT-2024-001"
+            }
+            
+            create_response = requests.post(
+                f"{self.api_url}/contributions",
+                json=test_contribution,
+                timeout=10
+            )
+            
+            if create_response.status_code == 200:
+                # Test moderation by trying inappropriate content
+                bad_contribution = {
                     "medecin_nom": "TESTEUR",
-                    "medecin_prenom": "Test",
-                    "type_contribution": "pro_employe",
-                    "description": "Médecin très professionnel et à l'écoute des patients. Rapport détaillé et objectif.",
-                    "source_reference": "Dossier TAT 2024-001"
+                    "medecin_prenom": "Bad",
+                    "type_contribution": "pro_employe", 
+                    "description": "Ce médecin est un salaud qui ne comprend rien",  # Contains forbidden word
+                    "source_reference": "Test"
                 }
                 
-                create_response = requests.post(
+                bad_response = requests.post(
                     f"{self.api_url}/contributions",
-                    json=test_contribution,
+                    json=bad_contribution,
                     timeout=10
                 )
                 
-                if create_response.status_code == 200:
-                    self.log_test("Contributions", True)
+                # Should be rejected (400 Bad Request) 
+                if bad_response.status_code == 400:
+                    self.log_test("Contributions & Moderation", True)
                     return True
                 else:
-                    self.log_test("Contributions", False, f"Create failed: {create_response.status_code}")
+                    self.log_test("Contributions & Moderation", False, f"Moderation not working: {bad_response.status_code}")
             else:
-                self.log_test("Contributions", False, f"Get failed: {response.status_code}")
+                self.log_test("Contributions & Moderation", False, f"Create failed: {create_response.status_code}")
         except Exception as e:
-            self.log_test("Contributions", False, f"Exception: {str(e)}")
+            self.log_test("Contributions & Moderation", False, f"Exception: {str(e)}")
         return False
     
     def test_medecins_stats(self):
