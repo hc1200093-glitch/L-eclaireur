@@ -1133,7 +1133,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 # Traitement normal pour les autres fichiers
                 # Segmenter si PDF volumineux
                 if ext == '.pdf' and file_size > MAX_CHUNK_SIZE:
-                    logger.info(f"Fichier volumineux, segmentation en cours...")
+                    logger.info("Fichier volumineux, segmentation en cours...")
                     chunk_paths = split_pdf_into_chunks(tmp_path, MAX_CHUNK_SIZE)
                 else:
                     chunk_paths = [tmp_path]
