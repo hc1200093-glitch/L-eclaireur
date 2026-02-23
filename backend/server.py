@@ -56,6 +56,9 @@ from concurrent.futures import ThreadPoolExecutor
 active_analyses = {}
 analysis_executor = ThreadPoolExecutor(max_workers=2)
 
+# Verrou pour empêcher les analyses parallèles
+analysis_lock = asyncio.Lock()
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
