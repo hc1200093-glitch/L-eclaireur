@@ -267,13 +267,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "API Health Check"
-    - "Visitor Counter API"
-    - "Testimonials API"
-    - "Medecins Database API"
-    - "Contributions API"
+    - "Document Analysis API (Async)"
+    - "PDF Split API"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
