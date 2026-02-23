@@ -101,3 +101,160 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "L'Éclaireur - Outil d'aide pour les travailleurs québécois accidentés permettant d'analyser des documents CNESST/TAT avec anonymisation automatique. Application full-stack React/FastAPI/MongoDB avec intégration Google Gemini."
+
+backend:
+  - task: "API Health Check"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Corrigé erreur analysis_lock manquante. À tester."
+
+  - task: "Visitor Counter API"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Endpoints /stats/visitors et /stats/visitors/increment"
+
+  - task: "Testimonials API"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET/POST /testimonials avec modération contenu"
+
+  - task: "Medecins Database API"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /medecins, GET /medecins/search/{nom}"
+
+  - task: "Contributions API"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "POST /contributions avec modération"
+
+  - task: "Document Analysis API (Async)"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "POST /analyze-async, GET /analyze-status/{job_id}"
+
+  - task: "PDF Split API"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "POST /split-pdf pour découper gros PDFs"
+
+frontend:
+  - task: "Home Page"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Page d'accueil avec phare animé, compteurs, témoignages"
+
+  - task: "Analysis Page"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Upload de documents, analyse, téléchargement rapport"
+
+  - task: "Legal Popup"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Popup mentions légales avec consentements"
+
+  - task: "Dark Mode"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/App.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Toggle mode sombre"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "API Health Check"
+    - "Visitor Counter API"
+    - "Testimonials API"
+    - "Medecins Database API"
+    - "Contributions API"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Projet L'Éclaireur décompilé et corrigé. Erreur critique analysis_lock résolue. Prêt pour tests backend complets."
