@@ -1055,7 +1055,6 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
     # Acquérir le verrou pour empêcher les analyses parallèles
     async with analysis_lock:
         this_analysis_id = str(uuid.uuid4())
-        current_analysis_id = this_analysis_id
         logger.info(f"Début analyse {this_analysis_id}: {file.filename} ({file_size / (1024*1024):.2f} Mo)")
         
         chunk_paths = []
