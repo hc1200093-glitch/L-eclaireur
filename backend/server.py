@@ -527,7 +527,7 @@ Retourne ce JSON:
         try:
             data = json.loads(json_str.strip())
         except json.JSONDecodeError:
-            logger.warning(f"Impossible de parser le JSON des médecins")
+            logger.warning("Impossible de parser le JSON des médecins")
             return
         
         if not data.get("medecins"):
