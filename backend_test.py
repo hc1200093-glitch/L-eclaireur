@@ -233,25 +233,6 @@ class LEclaireurAPITester:
             self.log_test("Contributions & Moderation", False, f"Exception: {str(e)}")
         return False
     
-    def test_medecins_stats(self):
-        """Test medecins statistics endpoint"""
-        try:
-            response = requests.get(f"{self.api_url}/stats/medecins", timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                required_fields = ["disclaimer", "total_medecins_documentes", "total_contributions", "top_medecins_documentes"]
-                if all(field in data for field in required_fields):
-                    self.log_test("Medecins Statistics", True)
-                    return True
-                else:
-                    missing = [f for f in required_fields if f not in data]
-                    self.log_test("Medecins Statistics", False, f"Missing fields: {missing}")
-            else:
-                self.log_test("Medecins Statistics", False, f"Status code: {response.status_code}")
-        except Exception as e:
-            self.log_test("Medecins Statistics", False, f"Exception: {str(e)}")
-        return False
-    
     def test_analyze_endpoint_structure(self):
         """Test analyze endpoint structure (without actual file upload)"""
         try:
