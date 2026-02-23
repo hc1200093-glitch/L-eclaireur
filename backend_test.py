@@ -146,15 +146,15 @@ class LEclaireurAPITester:
                 data = response.json()
                 if "disclaimer" in data and "medecins" in data:
                     
-                    # Test search functionality
-                    search_response = requests.get(f"{self.api_url}/medecins/search/test", timeout=10)
+                    # Test search functionality as specified in review
+                    search_response = requests.get(f"{self.api_url}/medecins/search/Test", timeout=10)
                     if search_response.status_code == 200:
                         search_data = search_response.json()
-                        if "medecins" in search_data:
+                        if "medecins" in search_data and "disclaimer" in search_data:
                             self.log_test("Medecins Database", True)
                             return True
                         else:
-                            self.log_test("Medecins Database", False, "Search missing medecins field")
+                            self.log_test("Medecins Database", False, "Search missing required fields")
                     else:
                         self.log_test("Medecins Database", False, f"Search failed: {search_response.status_code}")
                 else:
@@ -163,6 +163,28 @@ class LEclaireurAPITester:
                 self.log_test("Medecins Database", False, f"Get medecins failed: {response.status_code}")
         except Exception as e:
             self.log_test("Medecins Database", False, f"Exception: {str(e)}")
+        return False
+
+    def test_reports_latest(self):
+        """Test latest reports endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/reports/latest", timeout=10)
+            # This endpoint can return 404 if no reports exist, which is acceptable
+            if response.status_code == 200:
+                data = response.json()
+                if "report_id" in data or "filename" in data:
+                    self.log_test("Reports Latest", True)
+                    return True
+                else:
+                    self.log_test("Reports Latest", False, "Invalid response structure")
+            elif response.status_code == 404:
+                # 404 is acceptable if no reports exist
+                self.log_test("Reports Latest", True, "No reports found (404 is expected)")
+                return True
+            else:
+                self.log_test("Reports Latest", False, f"Unexpected status: {response.status_code}")
+        except Exception as e:
+            self.log_test("Reports Latest", False, f"Exception: {str(e)}")
         return False
     
     def test_contributions(self):
