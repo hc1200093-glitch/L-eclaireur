@@ -89,35 +89,52 @@ class LEclaireurAPITester:
         return False
     
     def test_testimonials(self):
-        """Test testimonials endpoints"""
+        """Test testimonials endpoints including moderation"""
         try:
             # Get testimonials
             response = requests.get(f"{self.api_url}/testimonials", timeout=10)
             if response.status_code == 200:
                 testimonials = response.json()
                 
-                # Create a test testimonial
-                test_testimonial = {
+                # Test content moderation - should be rejected
+                bad_testimonial = {
                     "name": "Test User",
-                    "message": "Excellent outil pour comprendre mes documents CNESST",
-                    "rating": 5
+                    "message": "Ce médecin est un connard qui m'a mal traité",  # Contains forbidden word
+                    "rating": 1
                 }
                 
-                create_response = requests.post(
+                bad_response = requests.post(
                     f"{self.api_url}/testimonials", 
-                    json=test_testimonial,
+                    json=bad_testimonial,
                     timeout=10
                 )
                 
-                if create_response.status_code == 200:
-                    self.log_test("Testimonials", True)
-                    return True
+                # Should be rejected (400 Bad Request)
+                if bad_response.status_code == 400:
+                    # Now test a good testimonial
+                    good_testimonial = {
+                        "name": "Marie Tremblay",
+                        "message": "Très utile pour comprendre mon dossier CNESST, je recommande fortement cet outil",
+                        "rating": 5
+                    }
+                    
+                    create_response = requests.post(
+                        f"{self.api_url}/testimonials", 
+                        json=good_testimonial,
+                        timeout=10
+                    )
+                    
+                    if create_response.status_code == 200:
+                        self.log_test("Testimonials & Moderation", True)
+                        return True
+                    else:
+                        self.log_test("Testimonials & Moderation", False, f"Good testimonial failed: {create_response.status_code}")
                 else:
-                    self.log_test("Testimonials", False, f"Create failed: {create_response.status_code}")
+                    self.log_test("Testimonials & Moderation", False, f"Moderation not working - bad content accepted: {bad_response.status_code}")
             else:
-                self.log_test("Testimonials", False, f"Get failed: {response.status_code}")
+                self.log_test("Testimonials & Moderation", False, f"Get failed: {response.status_code}")
         except Exception as e:
-            self.log_test("Testimonials", False, f"Exception: {str(e)}")
+            self.log_test("Testimonials & Moderation", False, f"Exception: {str(e)}")
         return False
     
     def test_medecins_endpoints(self):
