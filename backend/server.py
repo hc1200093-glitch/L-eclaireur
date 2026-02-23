@@ -155,7 +155,7 @@ def moderer_contenu(texte: str) -> tuple[bool, str]:
     texte_lower = texte.lower()
     for mot in MOTS_INTERDITS:
         if mot in texte_lower:
-            return False, f"Contenu inapproprié détecté. Merci de reformuler de manière factuelle et respectueuse."
+            return False, "Contenu inapproprié détecté. Merci de reformuler de manière factuelle et respectueuse."
     return True, ""
 
 # ===== DESTRUCTION SÉCURISÉE DOD 5220.22-M =====
