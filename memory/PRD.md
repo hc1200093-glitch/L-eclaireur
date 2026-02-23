@@ -79,17 +79,15 @@ Henri Albert Pertzing (accident le 31/12/2021) avec l'aide de E1 par Emergent.sh
 
 ## Backlog / Non implémenté
 
-### P0 (Haute priorité)
-- [ ] PayPal (à venir selon Henri)
-- [ ] Stripe (à venir selon Henri)
-
 ### P1 (Moyenne priorité)
 - [ ] Traduction anglais
 
 ### P2 (Basse priorité)
 - [ ] QR Code dans PDF (complexe)
 
-### Refusé
+### Refusé / Retiré
+- [x] PayPal (retiré de l'interface)
+- [x] Stripe (retiré de l'interface)
 - [x] Historique des analyses (NON - aucune copie gardée)
 - [x] Mise à jour automatique mensuelle des liens (trop complexe)
 - [x] Liens actifs dans PDF téléchargé (limitation jsPDF)
