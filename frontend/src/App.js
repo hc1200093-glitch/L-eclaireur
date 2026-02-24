@@ -950,7 +950,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
         files.forEach(file => formData.append("files", file));
         
         const response = await axios.post(
-          `${API}/analyze-multiple?consent_ai_learning=${consentAiLearning}`,
+          `${API}/analyze-multiple?consent_ai_learning=${consentAiLearning}&user_api_key=${encodeURIComponent(userApiKey)}`,
           formData,
           {
             headers: { "Content-Type": "multipart/form-data" },
