@@ -709,6 +709,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [isSplitting, setIsSplitting] = useState(false);
   const [largeFile, setLargeFile] = useState(null);
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [analysisMode, setAnalysisMode] = useState('basic'); // 'basic' ou 'complete'
   const progressIntervalRef = useRef(null);
   const latencyTimeoutRef = useRef(null);
 
@@ -724,6 +725,7 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   };
 
   const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf', '.zip', '.rar'];
+  const ACCEPTED_FORMATS_BASIC = ['.pdf']; // Seuls les PDFs pour le mode basique
   const LARGE_FILE_THRESHOLD = 30 * 1024 * 1024; // 30 Mo
 
   const isAcceptedFormat = (filename) => {
