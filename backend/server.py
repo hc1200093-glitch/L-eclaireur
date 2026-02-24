@@ -1171,7 +1171,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                 
                 for i, chunk_path in enumerate(chunk_paths, 1):
                     logger.info(f"Analyse du segment {i}/{total_segments}...")
-                    segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
+                    segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments, user_api_key)
                     # Filtrer les résultats None
                     if segment_analysis:
                         all_analyses.append(segment_analysis)
