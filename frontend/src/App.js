@@ -708,8 +708,21 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [showLargeFileWarning, setShowLargeFileWarning] = useState(false);
   const [isSplitting, setIsSplitting] = useState(false);
   const [largeFile, setLargeFile] = useState(null);
+  const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
+  const [showApiKeyInfo, setShowApiKeyInfo] = useState(false);
   const progressIntervalRef = useRef(null);
   const latencyTimeoutRef = useRef(null);
+
+  // Sauvegarder la clé API dans localStorage quand elle change
+  const handleApiKeyChange = (e) => {
+    const key = e.target.value;
+    setUserApiKey(key);
+    if (key) {
+      localStorage.setItem('gemini_api_key', key);
+    } else {
+      localStorage.removeItem('gemini_api_key');
+    }
+  };
 
   const ACCEPTED_FORMATS = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.tiff', '.tif', '.bmp', '.txt', '.rtf', '.zip', '.rar'];
   const LARGE_FILE_THRESHOLD = 30 * 1024 * 1024; // 30 Mo
