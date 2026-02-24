@@ -1063,8 +1063,12 @@ async def get_analysis_status(job_id: str):
 
 # ===== ANCIEN ENDPOINT (gardé pour compatibilité) =====
 @api_router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False):
+async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bool = False, user_api_key: str = None):
     """Analyse un document et retourne un rapport de défense."""
+    
+    # Vérifier qu'une clé API est fournie
+    if not user_api_key and not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=400, detail="Veuillez fournir votre clé API Google Gemini pour effectuer l'analyse.")
     
     contents = await file.read()
     file_size = len(contents)
