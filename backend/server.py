@@ -978,8 +978,12 @@ async def run_analysis_background(job_id: str, file_path: str, filename: str, fi
             destruction_securisee(file_path)
 
 @api_router.post("/analyze-async", response_model=AsyncAnalysisResponse)
-async def analyze_document_async(file: UploadFile = File(...), consent_ai_learning: bool = False):
+async def analyze_document_async(file: UploadFile = File(...), consent_ai_learning: bool = False, user_api_key: str = None):
     """Lance une analyse en arrière-plan et retourne immédiatement un ID de job."""
+    
+    # Vérifier qu'une clé API est fournie
+    if not user_api_key and not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=400, detail="Veuillez fournir votre clé API Google Gemini pour effectuer l'analyse.")
     
     if not is_accepted_format(file.filename):
         accepted = ", ".join(ACCEPTED_FORMATS.keys())
@@ -1015,8 +1019,8 @@ async def analyze_document_async(file: UploadFile = File(...), consent_ai_learni
         "consent_ai_learning": consent_ai_learning
     })
     
-    # Lancer l'analyse en arrière-plan
-    asyncio.create_task(run_analysis_background(job_id, tmp_path, file.filename, file_size, ext, consent_ai_learning))
+    # Lancer l'analyse en arrière-plan avec la clé API de l'utilisateur
+    asyncio.create_task(run_analysis_background(job_id, tmp_path, file.filename, file_size, ext, consent_ai_learning, user_api_key))
     
     logger.info(f"Analyse asynchrone lancée: {job_id} pour {file.filename}")
     
