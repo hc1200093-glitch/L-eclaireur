@@ -1187,6 +1187,85 @@ async def run_analysis_background(job_id: str, file_path: str, filename: str, fi
         if os.path.exists(file_path):
             destruction_securisee(file_path)
 
+# ===== ENDPOINT ANALYSE BASIQUE (GRATUIT - SANS IA) =====
+@api_router.post("/analyze-basic", response_model=BasicAnalysisResponse)
+async def analyze_document_basic(file: UploadFile = File(...)):
+    """
+    Analyse basique GRATUITE sans intelligence artificielle.
+    Offre: extraction de texte, anonymisation, chronologie des dates.
+    """
+    
+    # Vérifier le format
+    if not is_accepted_format(file.filename):
+        accepted = ", ".join(ACCEPTED_FORMATS.keys())
+        raise HTTPException(status_code=400, detail=f"Format non accepté. Formats acceptés: {accepted}")
+    
+    contents = await file.read()
+    file_size = len(contents)
+    max_size = 50 * 1024 * 1024  # 50 Mo pour le mode basique
+    
+    if file_size > max_size:
+        raise HTTPException(status_code=400, detail="Le fichier dépasse la limite de 50 Mo pour le mode basique")
+    
+    ext = get_file_extension(file.filename)
+    
+    # Seuls les PDFs sont supportés pour le mode basique (extraction de texte)
+    if ext != '.pdf':
+        raise HTTPException(
+            status_code=400, 
+            detail="Le mode basique supporte uniquement les fichiers PDF. Pour les images ou autres formats, utilisez le mode complet (IA)."
+        )
+    
+    tmp_path = None
+    try:
+        # Sauvegarder temporairement
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
+            tmp_file.write(contents)
+            tmp_path = tmp_file.name
+        
+        # Extraire le texte
+        text_content = extract_text_from_pdf(tmp_path)
+        
+        if not text_content or len(text_content.strip()) < 50:
+            raise HTTPException(
+                status_code=400,
+                detail="Impossible d'extraire le texte de ce PDF. Le document est peut-être scanné (image). Utilisez le mode complet (IA) pour les PDFs scannés."
+            )
+        
+        # Anonymiser le texte
+        anonymized_text = anonymize_complete(text_content)
+        
+        # Extraire les dates
+        dates = extract_dates_from_text(text_content)
+        
+        # Générer le rapport
+        full_report = generate_basic_report(file.filename, text_content, anonymized_text, dates)
+        
+        word_count = len(text_content.split())
+        
+        logger.info(f"Analyse basique terminée pour {file.filename}: {word_count} mots, {len(dates)} dates")
+        
+        return BasicAnalysisResponse(
+            success=True,
+            filename=file.filename,
+            word_count=word_count,
+            dates_count=len(dates),
+            dates=dates,
+            anonymized_text=anonymized_text,
+            full_report=full_report,
+            message="Analyse basique terminée avec succès"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur analyse basique: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
+    finally:
+        # Destruction sécurisée du fichier temporaire
+        if tmp_path and os.path.exists(tmp_path):
+            destruction_securisee(tmp_path)
+
 @api_router.post("/analyze-async", response_model=AsyncAnalysisResponse)
 async def analyze_document_async(file: UploadFile = File(...), consent_ai_learning: bool = False, user_api_key: str = None):
     """Lance une analyse en arrière-plan et retourne immédiatement un ID de job."""
