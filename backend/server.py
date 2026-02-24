@@ -843,7 +843,6 @@ async def run_analysis_background(job_id: str, file_path: str, filename: str, fi
             {"job_id": job_id},
             {"$set": {"status": "in_progress", "message": "Analyse démarrée..."}}
         )
-        )
         
         # Si c'est un ZIP ou RAR, extraire les PDFs
         if ext == '.zip':
