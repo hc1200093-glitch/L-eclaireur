@@ -617,8 +617,12 @@ class MultiAnalysisResponse(BaseModel):
     destruction_confirmed: bool = True
 
 @api_router.post("/analyze-multiple", response_model=MultiAnalysisResponse)
-async def analyze_multiple_documents(files: List[UploadFile] = File(...), consent_ai_learning: bool = False):
+async def analyze_multiple_documents(files: List[UploadFile] = File(...), consent_ai_learning: bool = False, user_api_key: str = None):
     """Analyse plusieurs documents et retourne un rapport combiné."""
+    
+    # Vérifier qu'une clé API est fournie
+    if not user_api_key and not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=400, detail="Veuillez fournir votre clé API Google Gemini pour effectuer l'analyse.")
     
     if len(files) > 10:
         raise HTTPException(status_code=400, detail="Maximum 10 fichiers à la fois")
@@ -649,9 +653,9 @@ async def analyze_multiple_documents(files: List[UploadFile] = File(...), consen
             
             logger.info(f"Analyse du fichier {idx}/{len(files)}: {file.filename}")
             
-            # Analyser le document
+            # Analyser le document avec la clé API de l'utilisateur
             mime_type = ACCEPTED_FORMATS.get(ext, 'application/octet-stream')
-            analysis = await analyze_single_file(tmp_path, mime_type, file.filename, idx, len(files))
+            analysis = await analyze_single_file(tmp_path, mime_type, file.filename, idx, len(files), user_api_key)
             # S'assurer que analysis n'est jamais None
             if analysis is None:
                 analysis = "[Analyse non disponible pour ce document]"
