@@ -839,10 +839,19 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const handleAnalyze = async () => {
     if (files.length === 0) return;
     
-    // Vérifier que la clé API est fournie
-    if (!userApiKey || userApiKey.trim() === '') {
-      setError("Veuillez entrer votre clé API Google Gemini pour effectuer l'analyse.");
+    // Vérifier que la clé API est fournie pour le mode complet
+    if (analysisMode === 'complete' && (!userApiKey || userApiKey.trim() === '')) {
+      setError("Veuillez entrer votre clé API Google Gemini pour l'analyse complète.");
       return;
+    }
+    
+    // Vérifier le format pour le mode basique
+    if (analysisMode === 'basic') {
+      const nonPdfFiles = files.filter(f => !f.name.toLowerCase().endsWith('.pdf'));
+      if (nonPdfFiles.length > 0) {
+        setError("Le mode basique supporte uniquement les fichiers PDF. Utilisez le mode complet (IA) pour les autres formats.");
+        return;
+      }
     }
     
     setLoading(true);
@@ -857,6 +866,35 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
     try {
       const formData = new FormData();
       
+      // MODE BASIQUE (gratuit, sans IA)
+      if (analysisMode === 'basic') {
+        formData.append("file", files[0]);
+        
+        setProgress(30);
+        const response = await axios.post(
+          `${API}/analyze-basic`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+            timeout: 120000, // 2 minutes max
+            signal: controller.signal,
+          }
+        );
+        
+        setProgress(100);
+        setResult({
+          success: true,
+          analysis: response.data.full_report,
+          filename: response.data.filename,
+          isBasicMode: true,
+          wordCount: response.data.word_count,
+          datesCount: response.data.dates_count
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // MODE COMPLET (avec IA)
       // Pour un seul fichier, utiliser l'endpoint asynchrone
       if (files.length === 1) {
         formData.append("file", files[0]);
