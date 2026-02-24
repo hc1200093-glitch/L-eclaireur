@@ -709,7 +709,6 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const [isSplitting, setIsSplitting] = useState(false);
   const [largeFile, setLargeFile] = useState(null);
   const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [showApiKeyInfo, setShowApiKeyInfo] = useState(false);
   const progressIntervalRef = useRef(null);
   const latencyTimeoutRef = useRef(null);
 
