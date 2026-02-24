@@ -1274,27 +1274,89 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
           )}
         </div>
 
-        {/* Section Clé API Gemini */}
+        {/* Section choix du mode d'analyse */}
         {files.length > 0 && (
+          <div className="analysis-mode-section" data-testid="analysis-mode-section">
+            <h4>📊 Choisissez votre type d'analyse :</h4>
+            
+            <div className="mode-options">
+              {/* Mode Basique */}
+              <div 
+                className={`mode-option ${analysisMode === 'basic' ? 'selected' : ''}`}
+                onClick={() => setAnalysisMode('basic')}
+                data-testid="mode-basic"
+              >
+                <div className="mode-header">
+                  <input 
+                    type="radio" 
+                    name="analysisMode" 
+                    checked={analysisMode === 'basic'} 
+                    onChange={() => setAnalysisMode('basic')}
+                  />
+                  <span className="mode-title">🆓 Analyse Basique</span>
+                  <span className="mode-badge free">GRATUIT</span>
+                </div>
+                <div className="mode-description">
+                  <p>Pour les personnes qui n'ont pas les moyens</p>
+                  <ul>
+                    <li>✅ Extraction du texte</li>
+                    <li>✅ Anonymisation des données sensibles</li>
+                    <li>✅ Chronologie des dates</li>
+                    <li>✅ Document anonymisé téléchargeable</li>
+                    <li>❌ Pas d'analyse juridique</li>
+                    <li>❌ Pas de rapport de défense</li>
+                  </ul>
+                  <p className="mode-note">📄 Fichiers PDF uniquement</p>
+                </div>
+              </div>
+              
+              {/* Mode Complet */}
+              <div 
+                className={`mode-option ${analysisMode === 'complete' ? 'selected' : ''}`}
+                onClick={() => setAnalysisMode('complete')}
+                data-testid="mode-complete"
+              >
+                <div className="mode-header">
+                  <input 
+                    type="radio" 
+                    name="analysisMode" 
+                    checked={analysisMode === 'complete'} 
+                    onChange={() => setAnalysisMode('complete')}
+                  />
+                  <span className="mode-title">🤖 Analyse Complète (IA)</span>
+                  <span className="mode-badge paid">PAYANT</span>
+                </div>
+                <div className="mode-description">
+                  <p>Pour avocats, syndicats et ceux qui peuvent payer</p>
+                  <ul>
+                    <li>✅ Tout le mode basique +</li>
+                    <li>✅ <strong>Analyse juridique complète</strong></li>
+                    <li>✅ <strong>Rapport de défense</strong></li>
+                    <li>✅ <strong>Détection d'incohérences</strong></li>
+                    <li>✅ <strong>Arguments pour contestation</strong></li>
+                    <li>✅ Support images (IRM, radios...)</li>
+                  </ul>
+                  <p className="mode-cost">💰 ~0.01$ à 0.05$ USD par analyse</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Section Clé API Gemini - uniquement pour mode complet */}
+        {files.length > 0 && analysisMode === 'complete' && (
           <div className="api-key-section" data-testid="api-key-section">
             <div className="api-key-warning">
               <div className="warning-header">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
-                <h4>⚠️ Frais d'analyse - Clé API requise</h4>
+                <h4>🔑 Clé API requise pour l'analyse complète</h4>
               </div>
               <p>
-                L'analyse de documents médicaux utilise <strong>Google Gemini AI</strong> et génère des frais.
-                Ces frais sont <strong>à votre charge</strong> et facturés directement par Google.
+                L'analyse complète utilise <strong>Google Gemini AI</strong>. 
+                Les frais sont <strong>à votre charge</strong> et facturés directement par Google.
               </p>
-              <div className="cost-estimate">
-                <h5>📊 Estimation des coûts :</h5>
-                <ul>
-                  <li>Coût approximatif : <strong>~0.01$ à 0.05$ USD</strong> par analyse</li>
-                  <li>Un document PDF de 10-20 pages ≈ quelques centimes</li>
-                </ul>
-              </div>
               <div className="api-key-input-container">
                 <label htmlFor="gemini-api-key">Votre clé API Google Gemini :</label>
                 <div className="api-key-input-row">
@@ -1327,9 +1389,14 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
 
         {files.length > 0 && (
           <div className="action-buttons">
-            <button className="btn btn-primary" onClick={handleAnalyze} disabled={loading || !userApiKey} data-testid="analyze-btn">
+            <button 
+              className={`btn ${analysisMode === 'basic' ? 'btn-success' : 'btn-primary'}`} 
+              onClick={handleAnalyze} 
+              disabled={loading || (analysisMode === 'complete' && !userApiKey)} 
+              data-testid="analyze-btn"
+            >
               <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              {loading ? "Analyse en cours..." : "Analyser le document"}
+              {loading ? "Analyse en cours..." : (analysisMode === 'basic' ? "🆓 Lancer l'analyse basique" : "🤖 Lancer l'analyse complète")}
             </button>
             <button className="btn btn-secondary btn-cancel-active" onClick={handleCancel} data-testid="cancel-btn">
               {loading ? "⛔ Annuler l'analyse" : "Annuler"}
