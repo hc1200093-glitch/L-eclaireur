@@ -1130,7 +1130,7 @@ async def analyze_document(file: UploadFile = File(...), consent_ai_learning: bo
                     # Analyser les segments de ce PDF
                     pdf_analyses = []
                     for seg_idx, chunk_path in enumerate(pdf_chunks, 1):
-                        analysis = await analyze_pdf_segment(chunk_path, seg_idx, len(pdf_chunks))
+                        analysis = await analyze_pdf_segment(chunk_path, seg_idx, len(pdf_chunks), user_api_key)
                         # Filtrer les résultats None
                         if analysis:
                             pdf_analyses.append(analysis)
