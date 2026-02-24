@@ -838,6 +838,12 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
   const handleAnalyze = async () => {
     if (files.length === 0) return;
     
+    // Vérifier que la clé API est fournie
+    if (!userApiKey || userApiKey.trim() === '') {
+      setError("Veuillez entrer votre clé API Google Gemini pour effectuer l'analyse.");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     setResult(null);
@@ -854,9 +860,9 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
       if (files.length === 1) {
         formData.append("file", files[0]);
         
-        // Lancer l'analyse asynchrone
+        // Lancer l'analyse asynchrone avec la clé API de l'utilisateur
         const startResponse = await axios.post(
-          `${API}/analyze-async?consent_ai_learning=${consentAiLearning}`,
+          `${API}/analyze-async?consent_ai_learning=${consentAiLearning}&user_api_key=${encodeURIComponent(userApiKey)}`,
           formData,
           {
             headers: { "Content-Type": "multipart/form-data" },
