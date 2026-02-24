@@ -893,7 +893,7 @@ async def run_analysis_background(job_id: str, file_path: str, filename: str, fi
                 }}
             )
             
-            segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments)
+            segment_analysis = await analyze_pdf_segment(chunk_path, i, total_segments, user_api_key)
             if segment_analysis:
                 all_analyses.append(segment_analysis)
             else:
