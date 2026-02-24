@@ -2179,3 +2179,231 @@ body.dark-mode .form-notice {
   color: #c62828 !important;
   margin-top: 0.75rem !important;
 }
+
+/* ===== SECTION CLÉ API GEMINI ===== */
+.api-key-section {
+  margin: 1.5rem 0;
+}
+
+.api-key-warning {
+  background: linear-gradient(135deg, #fff8e1, #ffecb3);
+  border: 2px solid #ffa000;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+body.dark-mode .api-key-warning {
+  background: linear-gradient(135deg, #3a3520, #4a4530);
+  border-color: #c9a227;
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.warning-header svg {
+  width: 28px;
+  height: 28px;
+  stroke: #f57c00;
+  flex-shrink: 0;
+}
+
+body.dark-mode .warning-header svg {
+  stroke: #ffa000;
+}
+
+.warning-header h4 {
+  color: #e65100;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+body.dark-mode .warning-header h4 {
+  color: #ffb74d;
+}
+
+.api-key-warning > p {
+  color: #5d4037;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+body.dark-mode .api-key-warning > p {
+  color: #e0e0e0;
+}
+
+.cost-estimate {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #ffa000;
+}
+
+body.dark-mode .cost-estimate {
+  background: #2a2a3a;
+  border-left-color: #c9a227;
+}
+
+.cost-estimate h5 {
+  color: #e65100;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+body.dark-mode .cost-estimate h5 {
+  color: #ffb74d;
+}
+
+.cost-estimate ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cost-estimate li {
+  color: #5d4037;
+  padding: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+body.dark-mode .cost-estimate li {
+  color: #e0e0e0;
+}
+
+.api-key-input-container {
+  margin-top: 1rem;
+}
+
+.api-key-input-container label {
+  display: block;
+  color: #5d4037;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+body.dark-mode .api-key-input-container label {
+  color: #e0e0e0;
+}
+
+.api-key-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.api-key-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #ffa000;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: monospace;
+  background: white;
+  color: var(--text-dark);
+}
+
+body.dark-mode .api-key-input {
+  background: #2a2a3a;
+  border-color: #c9a227;
+  color: #e0e0e0;
+}
+
+.api-key-input:focus {
+  outline: none;
+  border-color: #e65100;
+  box-shadow: 0 0 0 3px rgba(255, 160, 0, 0.2);
+}
+
+.btn-info-small {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: #ffa000;
+  color: white;
+  border: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-info-small:hover {
+  background: #e65100;
+  transform: scale(1.1);
+}
+
+.api-key-info {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid #ffa000;
+}
+
+body.dark-mode .api-key-info {
+  background: #2a2a3a;
+  border-color: #c9a227;
+}
+
+.api-key-info h5 {
+  color: #e65100;
+  margin-bottom: 0.75rem;
+}
+
+body.dark-mode .api-key-info h5 {
+  color: #ffb74d;
+}
+
+.api-key-info ol {
+  padding-left: 1.5rem;
+  margin: 0;
+}
+
+.api-key-info li {
+  color: #5d4037;
+  padding: 0.25rem 0;
+}
+
+body.dark-mode .api-key-info li {
+  color: #e0e0e0;
+}
+
+.api-key-info a {
+  color: #1565c0;
+  font-weight: 600;
+}
+
+body.dark-mode .api-key-info a {
+  color: #64b5f6;
+}
+
+.api-key-note {
+  background: #e3f2fd;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #1565c0;
+}
+
+body.dark-mode .api-key-note {
+  background: #1a3a4a;
+  color: #64b5f6;
+}
+
+/* Bouton désactivé si pas de clé API */
+.btn-primary:disabled {
+  background: #b0bec5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-primary:disabled:hover {
+  background: #b0bec5;
+  transform: none;
+}
