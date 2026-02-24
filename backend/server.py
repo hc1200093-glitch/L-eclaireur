@@ -691,16 +691,22 @@ async def analyze_multiple_documents(files: List[UploadFile] = File(...), consen
                 destruction_securisee(path)
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse: {str(e)}")
 
-async def analyze_single_file(file_path: str, mime_type: str, filename: str, idx: int, total: int) -> str:
+async def analyze_single_file(file_path: str, mime_type: str, filename: str, idx: int, total: int, user_api_key: str = None) -> str:
     """Analyse un seul fichier avec Gemini."""
     import asyncio
+    
+    # Utiliser la clé de l'utilisateur ou la clé Emergent par défaut
+    api_key = user_api_key if user_api_key else EMERGENT_LLM_KEY
+    
+    if not api_key:
+        return "[Erreur: Aucune clé API fournie. Veuillez entrer votre clé API Google Gemini.]"
     
     date_analyse = datetime.now(timezone.utc).strftime("%d/%m/%Y à %H:%M UTC")
     
     for attempt in range(3):
         try:
             chat = LlmChat(
-                api_key=EMERGENT_LLM_KEY,
+                api_key=api_key,
                 session_id=f"analysis-{uuid.uuid4()}",
                 system_message=SYSTEM_MESSAGE_ANALYSE.replace("{date_analyse}", date_analyse)
             ).with_model("gemini", "gemini-2.5-flash")
