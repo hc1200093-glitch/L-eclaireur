@@ -1268,29 +1268,19 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
                     className="api-key-input"
                     data-testid="api-key-input"
                   />
-                  <button 
-                    type="button" 
-                    className="btn btn-info-small"
-                    onClick={() => setShowApiKeyInfo(!showApiKeyInfo)}
-                    title="Comment obtenir une clé ?"
-                  >
-                    ?
-                  </button>
                 </div>
-                {showApiKeyInfo && (
-                  <div className="api-key-info">
-                    <h5>Comment obtenir une clé API Google Gemini ?</h5>
-                    <ol>
-                      <li>Rendez-vous sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a></li>
-                      <li>Connectez-vous avec votre compte Google</li>
-                      <li>Cliquez sur "Create API Key"</li>
-                      <li>Copiez la clé et collez-la ci-dessus</li>
-                    </ol>
-                    <p className="api-key-note">
-                      💡 <strong>Note :</strong> Votre clé est stockée uniquement dans votre navigateur et n'est jamais conservée sur nos serveurs.
-                    </p>
-                  </div>
-                )}
+                <div className="api-key-info">
+                  <h5>Comment obtenir une clé API Google Gemini ?</h5>
+                  <ol>
+                    <li>Rendez-vous sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a></li>
+                    <li>Connectez-vous avec votre compte Google</li>
+                    <li>Cliquez sur "Create API Key"</li>
+                    <li>Copiez la clé et collez-la ci-dessus</li>
+                  </ol>
+                  <p className="api-key-note">
+                    💡 <strong>Note :</strong> Votre clé est stockée uniquement dans votre navigateur et n'est jamais conservée sur nos serveurs.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
