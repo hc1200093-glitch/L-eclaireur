@@ -418,9 +418,15 @@ Pour chaque incohérence:
 *Date d'analyse: {date_analyse}*
 """
 
-async def analyze_pdf_segment(pdf_path: str, segment_num: int, total_segments: int, max_retries: int = 3) -> str:
+async def analyze_pdf_segment(pdf_path: str, segment_num: int, total_segments: int, user_api_key: str = None, max_retries: int = 3) -> str:
     """Analyse un segment de PDF avec Gemini avec retry automatique optimisé."""
     import asyncio
+    
+    # Utiliser la clé de l'utilisateur ou la clé Emergent par défaut
+    api_key = user_api_key if user_api_key else EMERGENT_LLM_KEY
+    
+    if not api_key:
+        return "[Erreur: Aucune clé API fournie. Veuillez entrer votre clé API Google Gemini.]"
     
     date_analyse = datetime.now(timezone.utc).strftime("%d/%m/%Y à %H:%M UTC")
     
@@ -429,7 +435,7 @@ async def analyze_pdf_segment(pdf_path: str, segment_num: int, total_segments: i
             logger.info(f"Analyse segment {segment_num}/{total_segments} - tentative {attempt+1}/{max_retries}")
             
             chat = LlmChat(
-                api_key=EMERGENT_LLM_KEY,
+                api_key=api_key,
                 session_id=f"analysis-{uuid.uuid4()}",
                 system_message=SYSTEM_MESSAGE_ANALYSE.replace("{date_analyse}", date_analyse)
             ).with_model("gemini", "gemini-2.5-flash")
