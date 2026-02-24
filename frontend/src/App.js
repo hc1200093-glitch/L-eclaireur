@@ -890,6 +890,14 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
           wordCount: response.data.word_count,
           datesCount: response.data.dates_count
         });
+        
+        // Incrémenter le compteur de travailleurs aidés (analyse basique réussie)
+        try {
+          await axios.post(`${API}/stats/visitors/increment`);
+          const statsRes = await axios.get(`${API}/stats/visitors`);
+          setVisitorCount(statsRes.data.count);
+        } catch (e) {}
+        
         setLoading(false);
         return;
       }
