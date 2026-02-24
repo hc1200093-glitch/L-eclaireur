@@ -247,6 +247,207 @@ def anonymize_for_ai_learning(text: str) -> str:
     
     return text
 
+# ===== ANALYSE BASIQUE (SANS IA) =====
+def extract_text_from_pdf(pdf_path: str) -> str:
+    """Extrait le texte d'un PDF sans utiliser l'IA."""
+    try:
+        reader = PdfReader(pdf_path)
+        text_content = []
+        for i, page in enumerate(reader.pages, 1):
+            page_text = page.extract_text()
+            if page_text:
+                text_content.append(f"--- Page {i} ---\n{page_text}")
+        return "\n\n".join(text_content)
+    except Exception as e:
+        logger.error(f"Erreur extraction PDF: {e}")
+        return ""
+
+def extract_dates_from_text(text: str) -> List[dict]:
+    """Extrait les dates mentionnées dans le texte."""
+    dates_found = []
+    
+    # Patterns de dates français
+    patterns = [
+        # Format: 31 décembre 2024, 1er janvier 2024
+        r'\b(\d{1,2}(?:er)?)\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\s+(\d{4})\b',
+        # Format: 31/12/2024, 01-12-2024
+        r'\b(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})\b',
+        # Format: 2024-12-31
+        r'\b(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})\b',
+    ]
+    
+    mois_map = {
+        'janvier': '01', 'février': '02', 'mars': '03', 'avril': '04',
+        'mai': '05', 'juin': '06', 'juillet': '07', 'août': '08',
+        'septembre': '09', 'octobre': '10', 'novembre': '11', 'décembre': '12'
+    }
+    
+    # Pattern 1: dates en lettres
+    for match in re.finditer(patterns[0], text, re.IGNORECASE):
+        jour = match.group(1).replace('er', '')
+        mois = mois_map.get(match.group(2).lower(), '01')
+        annee = match.group(3)
+        date_str = f"{annee}-{mois}-{jour.zfill(2)}"
+        context_start = max(0, match.start() - 50)
+        context_end = min(len(text), match.end() + 50)
+        context = text[context_start:context_end].strip()
+        dates_found.append({
+            "date": date_str,
+            "original": match.group(0),
+            "context": f"...{context}..."
+        })
+    
+    # Pattern 2: dates numériques JJ/MM/AAAA
+    for match in re.finditer(patterns[1], text):
+        jour, mois, annee = match.groups()
+        if int(mois) <= 12 and int(jour) <= 31:
+            date_str = f"{annee}-{mois.zfill(2)}-{jour.zfill(2)}"
+            context_start = max(0, match.start() - 50)
+            context_end = min(len(text), match.end() + 50)
+            context = text[context_start:context_end].strip()
+            dates_found.append({
+                "date": date_str,
+                "original": match.group(0),
+                "context": f"...{context}..."
+            })
+    
+    # Pattern 3: dates ISO AAAA-MM-JJ
+    for match in re.finditer(patterns[2], text):
+        annee, mois, jour = match.groups()
+        if int(mois) <= 12 and int(jour) <= 31:
+            date_str = f"{annee}-{mois.zfill(2)}-{jour.zfill(2)}"
+            context_start = max(0, match.start() - 50)
+            context_end = min(len(text), match.end() + 50)
+            context = text[context_start:context_end].strip()
+            dates_found.append({
+                "date": date_str,
+                "original": match.group(0),
+                "context": f"...{context}..."
+            })
+    
+    # Dédupliquer et trier par date
+    seen = set()
+    unique_dates = []
+    for d in dates_found:
+        if d["date"] not in seen:
+            seen.add(d["date"])
+            unique_dates.append(d)
+    
+    unique_dates.sort(key=lambda x: x["date"])
+    return unique_dates
+
+def anonymize_complete(text: str) -> str:
+    """Anonymisation complète pour le mode basique - masque toutes les données sensibles."""
+    # NAS (format: XXX-XXX-XXX ou XXX XXX XXX ou XXXXXXXXX)
+    text = re.sub(r'\b\d{3}[-\s]?\d{3}[-\s]?\d{3}\b', '***-***-***', text)
+    
+    # RAMQ (format: XXXX XXXX XXXX ou 12 caractères alphanumériques)
+    text = re.sub(r'\b[A-Z]{4}\s?\d{4}\s?\d{4}\b', '**** **** ****', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b[A-Z]{4}\d{8}\b', '************', text, flags=re.IGNORECASE)
+    
+    # Permis de conduire (format variable québécois)
+    text = re.sub(r'\b[A-Z]\d{4}[-\s]?\d{5}[-\s]?\d{2}\b', '*****-*****-**', text, flags=re.IGNORECASE)
+    
+    # Coordonnées bancaires
+    text = re.sub(r'\b\d{5}[-\s]?\d{3}[-\s]?\d{7}\b', '*****-***-*******', text)
+    text = re.sub(r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b', '****-****-****-****', text)
+    
+    # Numéros de téléphone
+    text = re.sub(r'\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b', '***-***-****', text)
+    text = re.sub(r'\b\(\d{3}\)\s?\d{3}[-.\s]?\d{4}\b', '(***) ***-****', text)
+    
+    # Codes postaux canadiens
+    text = re.sub(r'\b[A-Za-z]\d[A-Za-z][-\s]?\d[A-Za-z]\d\b', '*** ***', text)
+    
+    # Adresses courriel
+    text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '*****@*****.***', text)
+    
+    # Adresses physiques (patterns courants)
+    text = re.sub(r'\b\d{1,5}\s+(?:rue|avenue|boulevard|chemin|place|rang|route|côte)\s+[A-Za-zÀ-ÿ\s\-]+(?:,\s*[A-Za-zÀ-ÿ\s\-]+)?', '[ADRESSE MASQUÉE]', text, flags=re.IGNORECASE)
+    
+    return text
+
+def generate_basic_report(filename: str, text_content: str, anonymized_text: str, dates: List[dict]) -> str:
+    """Génère un rapport basique sans IA."""
+    date_analyse = datetime.now(timezone.utc).strftime("%d/%m/%Y à %H:%M UTC")
+    
+    # Compter les mots et pages approximatives
+    word_count = len(text_content.split())
+    
+    report = f"""# 📋 RAPPORT BASIQUE - L'Éclaireur
+## Document analysé : {filename}
+*Date d'analyse: {date_analyse}*
+
+---
+
+## ⚠️ AVERTISSEMENT
+Ce rapport est généré en **mode basique** (sans intelligence artificielle).
+Il contient uniquement :
+- L'extraction du texte
+- L'anonymisation des données sensibles
+- La chronologie des dates mentionnées
+
+**Pour une analyse juridique complète avec rapport de défense, utilisez le mode "Analyse complète (IA)".**
+
+---
+
+## 📊 Statistiques du document
+- **Nombre de mots approximatif** : {word_count:,}
+- **Données sensibles masquées** : NAS, RAMQ, téléphones, adresses, courriels
+
+---
+
+## 📅 Chronologie des dates identifiées ({len(dates)} dates trouvées)
+
+"""
+    
+    if dates:
+        for d in dates:
+            report += f"### 📌 {d['original']}\n"
+            report += f"*Contexte* : {d['context']}\n\n"
+    else:
+        report += "*Aucune date identifiée dans le document.*\n\n"
+    
+    report += """---
+
+## 📄 Contenu anonymisé du document
+
+"""
+    report += anonymized_text
+    
+    report += """
+
+---
+
+## 🔒 Données protégées
+Les informations suivantes ont été automatiquement masquées :
+- ✅ Numéro d'assurance sociale (NAS)
+- ✅ Numéro de RAMQ
+- ✅ Numéros de téléphone
+- ✅ Adresses postales
+- ✅ Adresses courriel
+- ✅ Coordonnées bancaires
+- ✅ Numéros de permis de conduire
+
+---
+
+*Rapport généré par L'Éclaireur - Mode Basique (gratuit)*
+*Pour aider les travailleurs québécois à comprendre leurs droits*
+"""
+    
+    return report
+
+# Modèle de réponse pour l'analyse basique
+class BasicAnalysisResponse(BaseModel):
+    success: bool
+    filename: str
+    word_count: int
+    dates_count: int
+    dates: List[dict]
+    anonymized_text: str
+    full_report: str
+    message: str
+
 def split_pdf_into_chunks(pdf_path: str, max_size_bytes: int = MAX_CHUNK_SIZE) -> List[str]:
     """Divise un PDF volumineux en plusieurs fichiers plus petits pour éviter les timeouts Gemini."""
     chunk_paths = []
