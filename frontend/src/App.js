@@ -948,6 +948,14 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
                 report_id: status.report_id,
                 message: status.message
               });
+              
+              // Incrémenter le compteur de travailleurs aidés (analyse complète réussie)
+              try {
+                await axios.post(`${API}/stats/visitors/increment`);
+                const statsRes = await axios.get(`${API}/stats/visitors`);
+                setVisitorCount(statsRes.data.count);
+              } catch (e) {}
+              
             } else if (status.status === "failed") {
               completed = true;
               // Essayer de récupérer le rapport partiel
