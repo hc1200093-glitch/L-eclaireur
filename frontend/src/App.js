@@ -526,7 +526,7 @@ const HomePage = ({ onStartAnalysis }) => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        await axios.post(`${API}/stats/visitors/increment`);
+        // Ne pas incrémenter à chaque visite - seulement charger le compteur
         const res = await axios.get(`${API}/stats/visitors`);
         setVisitorCount(res.data.count);
       } catch (e) {}
