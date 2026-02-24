@@ -822,7 +822,7 @@ def extract_pdfs_from_rar(rar_path: str) -> List[str]:
         return []
 
 # ===== ANALYSE ASYNCHRONE =====
-async def run_analysis_background(job_id: str, file_path: str, filename: str, file_size: int, ext: str, consent_ai_learning: bool):
+async def run_analysis_background(job_id: str, file_path: str, filename: str, file_size: int, ext: str, consent_ai_learning: bool, user_api_key: str = None):
     """Exécute l'analyse en arrière-plan et met à jour le statut dans la base de données."""
     chunk_paths = []
     extracted_pdfs = []
@@ -832,6 +832,7 @@ async def run_analysis_background(job_id: str, file_path: str, filename: str, fi
         await db.analysis_jobs.update_one(
             {"job_id": job_id},
             {"$set": {"status": "in_progress", "message": "Analyse démarrée..."}}
+        )
         )
         
         # Si c'est un ZIP ou RAR, extraire les PDFs
