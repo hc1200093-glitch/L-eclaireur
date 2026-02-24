@@ -1235,9 +1235,70 @@ const AnalysisPage = ({ onBackHome, consentAiLearning }) => {
           )}
         </div>
 
+        {/* Section Clé API Gemini */}
+        {files.length > 0 && (
+          <div className="api-key-section" data-testid="api-key-section">
+            <div className="api-key-warning">
+              <div className="warning-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <h4>⚠️ Frais d'analyse - Clé API requise</h4>
+              </div>
+              <p>
+                L'analyse de documents médicaux utilise <strong>Google Gemini AI</strong> et génère des frais.
+                Ces frais sont <strong>à votre charge</strong> et facturés directement par Google.
+              </p>
+              <div className="cost-estimate">
+                <h5>📊 Estimation des coûts :</h5>
+                <ul>
+                  <li>Coût approximatif : <strong>~0.01$ à 0.05$ USD</strong> par analyse</li>
+                  <li>Un document PDF de 10-20 pages ≈ quelques centimes</li>
+                </ul>
+              </div>
+              <div className="api-key-input-container">
+                <label htmlFor="gemini-api-key">Votre clé API Google Gemini :</label>
+                <div className="api-key-input-row">
+                  <input
+                    type="password"
+                    id="gemini-api-key"
+                    placeholder="AIza..."
+                    value={userApiKey}
+                    onChange={handleApiKeyChange}
+                    className="api-key-input"
+                    data-testid="api-key-input"
+                  />
+                  <button 
+                    type="button" 
+                    className="btn btn-info-small"
+                    onClick={() => setShowApiKeyInfo(!showApiKeyInfo)}
+                    title="Comment obtenir une clé ?"
+                  >
+                    ?
+                  </button>
+                </div>
+                {showApiKeyInfo && (
+                  <div className="api-key-info">
+                    <h5>Comment obtenir une clé API Google Gemini ?</h5>
+                    <ol>
+                      <li>Rendez-vous sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a></li>
+                      <li>Connectez-vous avec votre compte Google</li>
+                      <li>Cliquez sur "Create API Key"</li>
+                      <li>Copiez la clé et collez-la ci-dessus</li>
+                    </ol>
+                    <p className="api-key-note">
+                      💡 <strong>Note :</strong> Votre clé est stockée uniquement dans votre navigateur et n'est jamais conservée sur nos serveurs.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {files.length > 0 && (
           <div className="action-buttons">
-            <button className="btn btn-primary" onClick={handleAnalyze} disabled={loading} data-testid="analyze-btn">
+            <button className="btn btn-primary" onClick={handleAnalyze} disabled={loading || !userApiKey} data-testid="analyze-btn">
               <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               {loading ? "Analyse en cours..." : "Analyser le document"}
             </button>
